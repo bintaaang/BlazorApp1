@@ -1,5 +1,6 @@
-﻿@inject IMenuService MenuService
+@inject IMenuService MenuService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
 @implements IAsyncDisposable
 
 <nav class="nav flex-column">
@@ -52,10 +53,8 @@
         }
     }
 
-    private async Task HandleLogout()
+    private void HandleLogout()
     {
-        // This will be handled by the Login page logout logic
-        // Here we just redirect
         NavigationManager.NavigateTo("/login", forceLoad: true);
     }
 
@@ -64,4 +63,3 @@
         await Task.CompletedTask;
     }
 }
-
