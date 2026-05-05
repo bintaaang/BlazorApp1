@@ -1,0 +1,19 @@
+@inherits LayoutComponentBase
+
+<div class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <span class="bi bi-app-indicator"></span> Blazor RBAC
+            </a>
+        </div>
+    </nav>
+
+    <div class="flex-grow-1 d-flex align-items-center">
+        @Body
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 border-top border-secondary">
+        <p class="mb-0">&copy; 2024 Blazor RBAC App. All rights reserved.</p>
+    </footer>
+</div>
