@@ -8,17 +8,32 @@
     @if (menuItems.Count > 0)
     {
         <nav class="nav flex-column gap-2 bb-nav__menu">
-            @foreach (var item in menuItems)
+            @foreach (var moduleGroup in menuItems
+                    .GroupBy(item => new { item.ModuleId, item.ModuleName, item.ModuleIcon, item.ModuleOrder })
+                    .OrderBy(group => group.Key.ModuleOrder))
             {
-                <a class="@GetLinkClass(item.Url)"
-                   href="@item.Url"
-                   aria-current="@(IsActive(item.Url) ? "page" : null)">
-                    @if (!string.IsNullOrWhiteSpace(item.Icon))
+                <div class="bb-nav__module">
+                    <div class="bb-nav__module-title">
+                        @if (!string.IsNullOrWhiteSpace(moduleGroup.Key.ModuleIcon))
+                        {
+                            <i class="bb-nav__icon @moduleGroup.Key.ModuleIcon" aria-hidden="true"></i>
+                        }
+                        <span>@moduleGroup.Key.ModuleName</span>
+                    </div>
+
+                    @foreach (var item in moduleGroup.OrderBy(menu => menu.Order))
                     {
-                        <span class="bb-nav__icon">@item.Icon</span>
+                        <a class="@GetLinkClass(item.Url)"
+                           href="@item.Url"
+                           aria-current="@(IsActive(item.Url) ? "page" : null)">
+                            @if (!string.IsNullOrWhiteSpace(item.Icon))
+                            {
+                                <i class="bb-nav__icon @item.Icon" aria-hidden="true"></i>
+                            }
+                            <span>@item.Name</span>
+                        </a>
                     }
-                    <span>@item.Name</span>
-                </a>
+                </div>
             }
         </nav>
     }

@@ -1,33 +1,35 @@
 @inherits LayoutComponentBase
 
-<div class="bb-shell d-flex flex-column min-vh-100">
-    <header class="bb-shell__header">
-        <div class="container-fluid d-flex align-items-center justify-content-between py-3">
-            <a class="bb-shell__brand text-decoration-none" href="/">Blazor RBAC Console</a>
-            <AuthorizeView>
-                <Authorized>
-                    <a class="bb-shell__user text-decoration-none" href="/profile">@context.User.FindFirst("FullName")?.Value</a>
-                </Authorized>
-                <NotAuthorized>
-                    <a class="bb-shell__user text-decoration-none" href="/login">Login</a>
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
-    </header>
+<BootstrapBlazorRoot>
+    <div class="bb-shell d-flex flex-column min-vh-100">
+        <header class="bb-shell__header">
+            <div class="container-fluid d-flex align-items-center justify-content-between py-3">
+                <a class="bb-shell__brand text-decoration-none" href="/">Blazor RBAC Console</a>
+                <AuthorizeView>
+                    <Authorized>
+                        <a class="bb-shell__user text-decoration-none" href="/profile">@context.User.FindFirst("FullName")?.Value</a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="bb-shell__user text-decoration-none" href="/login">Login</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </header>
 
-    <div class="container-fluid flex-grow-1">
-        <div class="row g-0">
-            <aside class="col-xl-2 col-lg-3 bb-shell__sidebar">
-                <NavMenu />
-            </aside>
+        <div class="container-fluid flex-grow-1">
+            <div class="row g-0">
+                <aside class="col-xl-2 col-lg-3 bb-shell__sidebar">
+                    <NavMenu />
+                </aside>
 
-            <main class="col-xl-10 col-lg-9 p-4 p-xl-5">
-                @Body
-            </main>
+                <main class="col-xl-10 col-lg-9 p-4 p-xl-5">
+                    @Body
+                </main>
+            </div>
         </div>
+
+        <footer class="bb-shell__footer text-center py-3">
+            <small>&copy; 2026 Blazor RBAC App</small>
+        </footer>
     </div>
-
-    <footer class="bb-shell__footer text-center py-3">
-        <small>&copy; 2026 Blazor RBAC App</small>
-    </footer>
-</div>
+</BootstrapBlazorRoot>

@@ -14,8 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Module> Modules => Set<Module>();
     public DbSet<Menu> Menus => Set<Menu>();
-    public DbSet<UserMenu> UserMenus => Set<UserMenu>();
 
     public override int SaveChanges()
     {
@@ -36,10 +36,10 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>().ToTable("AppUsers");
         modelBuilder.Entity<Role>().ToTable("AppRoles");
         modelBuilder.Entity<Permission>().ToTable("AppPermissions");
+        modelBuilder.Entity<Module>().ToTable("AppModules");
         modelBuilder.Entity<Menu>().ToTable("AppMenus");
         modelBuilder.Entity<UserRole>().ToTable("AppUserRoles");
         modelBuilder.Entity<RolePermission>().ToTable("AppRolePermissions");
-        modelBuilder.Entity<UserMenu>().ToTable("AppUserMenus");
 
         // RolePermission composite key
         modelBuilder.Entity<RolePermission>()
@@ -73,21 +73,11 @@ public class AppDbContext : DbContext
             .HasForeignKey(ur => ur.RoleId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // UserMenu composite key
-        modelBuilder.Entity<UserMenu>()
-            .HasKey(um => new { um.UserId, um.MenuId });
-
-        modelBuilder.Entity<UserMenu>()
-            .HasOne(um => um.User)
-            .WithMany(u => u.UserMenus)
-            .HasForeignKey(um => um.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<UserMenu>()
-            .HasOne(um => um.Menu)
-            .WithMany(m => m.UserMenus)
-            .HasForeignKey(um => um.MenuId)
-            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Menu>()
+            .HasOne(m => m.Module)
+            .WithMany(m => m.Menus)
+            .HasForeignKey(m => m.ModuleId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Menu>()
             .HasOne(m => m.Parent)
@@ -115,8 +105,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Menu>()
             .HasIndex(m => m.Url);
 
-        modelBuilder.Entity<UserMenu>()
-            .HasIndex(um => new { um.UserId, um.IsActive });
+        modelBuilder.Entity<Module>()
+            .HasIndex(m => m.Name)
+            .IsUnique();
     }
 
     private void ApplyAuditInfo()

@@ -103,34 +103,12 @@ public class AuthService : IAuthService
                 await context.SaveChangesAsync();
             }
 
-            var defaultMenus = await context.Menus
-                .Where(m => m.IsActive && (m.PermissionName == "view_dashboard" || m.PermissionName == "view_profile"))
-                .ToListAsync();
-
-            if (defaultMenus.Count > 0)
-            {
-                var userMenus = defaultMenus.Select(menu => new Models.Entities.UserMenu
-                {
-                    UserId = user.Id,
-                    MenuId = menu.Id,
-                    IsActive = true
-                });
-
-                context.UserMenus.AddRange(userMenus);
-                await context.SaveChangesAsync();
-            }
-
             return (true, "Register berhasil");
         }
         catch (Exception ex)
         {
             return (false, $"Error: {ex.Message}");
         }
-    }
-
-    public async Task LogoutAsync()
-    {
-        await Task.CompletedTask;
     }
 
     private static string HashPassword(string password)

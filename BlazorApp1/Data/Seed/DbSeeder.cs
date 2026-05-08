@@ -66,9 +66,16 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
+        // Seed Modules
+        await EnsureModuleAsync(context, "Main", "Main application menu", "bi bi-grid", 1);
+        await EnsureModuleAsync(context, "Administration", "Administration menu", "bi bi-shield-lock", 2);
+
         // Seed Menu
         if (!context.Menus.Any())
         {
+            var mainModuleId = context.Modules.First(m => m.Name == "Main").Id;
+            var adminModuleId = context.Modules.First(m => m.Name == "Administration").Id;
+
             var menus = new[]
             {
                 new Menu
@@ -76,6 +83,7 @@ public static class DbSeeder
                     Name = "Dashboard",
                     Url = "/dashboard",
                     Icon = "bi bi-speedometer2",
+                    ModuleId = mainModuleId,
                     Order = 1,
                     PermissionName = "view_dashboard",
                     IsActive = true
@@ -85,6 +93,7 @@ public static class DbSeeder
                     Name = "Profile",
                     Url = "/profile",
                     Icon = "bi bi-person",
+                    ModuleId = mainModuleId,
                     Order = 2,
                     PermissionName = "view_profile",
                     IsActive = true
@@ -94,6 +103,7 @@ public static class DbSeeder
                     Name = "User Management",
                     Url = "/admin/users",
                     Icon = "bi bi-people",
+                    ModuleId = adminModuleId,
                     Order = 3,
                     PermissionName = "manage_users",
                     IsActive = true
@@ -103,6 +113,7 @@ public static class DbSeeder
                     Name = "Reports",
                     Url = "/admin/reports",
                     Icon = "bi bi-bar-chart",
+                    ModuleId = adminModuleId,
                     Order = 4,
                     PermissionName = "view_reports",
                     IsActive = true
@@ -112,6 +123,8 @@ public static class DbSeeder
             context.Menus.AddRange(menus);
             await context.SaveChangesAsync();
         }
+
+        await SyncMenuModulesAsync(context);
 
         // Seed Users (Demo)
         if (!context.Users.Any())
@@ -152,36 +165,6 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
-        // Seed UserMenus
-        if (!context.UserMenus.Any())
-        {
-            var users = context.Users.ToList();
-            var menus = context.Menus.ToList();
-
-            foreach (var user in users)
-            {
-                var roleNames = context.UserRoles
-                    .Where(ur => ur.UserId == user.Id)
-                    .Select(ur => ur.Role!.Name)
-                    .ToList();
-
-                var allowedMenus = roleNames.Contains("Admin")
-                    ? menus
-                    : menus.Where(m => m.PermissionName == "view_dashboard" || m.PermissionName == "view_profile").ToList();
-
-                foreach (var menu in allowedMenus)
-                {
-                    context.UserMenus.Add(new UserMenu
-                    {
-                        UserId = user.Id,
-                        MenuId = menu.Id,
-                        IsActive = true
-                    });
-                }
-            }
-
-            await context.SaveChangesAsync();
-        }
     }
 
     private static string HashPassword(string password)
@@ -189,5 +172,59 @@ public static class DbSeeder
         using var sha256 = SHA256.Create();
         var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
         return Convert.ToBase64String(hashedBytes);
+    }
+
+    private static async Task EnsureModuleAsync(
+        AppDbContext context,
+        string name,
+        string description,
+        string icon,
+        int order)
+    {
+        var module = context.Modules.FirstOrDefault(m => m.Name == name);
+        if (module == null)
+        {
+            context.Modules.Add(new Module
+            {
+                Name = name,
+                Description = description,
+                Icon = icon,
+                Order = order,
+                IsActive = true
+            });
+        }
+        else
+        {
+            module.Description = description;
+            module.Icon = icon;
+            module.Order = order;
+            module.IsActive = true;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SyncMenuModulesAsync(AppDbContext context)
+    {
+        var mainModuleId = context.Modules.First(m => m.Name == "Main").Id;
+        var adminModuleId = context.Modules.First(m => m.Name == "Administration").Id;
+
+        var moduleByUrl = new Dictionary<string, int>
+        {
+            ["/dashboard"] = mainModuleId,
+            ["/profile"] = mainModuleId,
+            ["/admin/users"] = adminModuleId,
+            ["/admin/reports"] = adminModuleId
+        };
+
+        foreach (var menu in context.Menus)
+        {
+            if (moduleByUrl.TryGetValue(menu.Url, out var moduleId))
+            {
+                menu.ModuleId = moduleId;
+            }
+        }
+
+        await context.SaveChangesAsync();
     }
 }
