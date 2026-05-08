@@ -10,5 +10,4 @@ public class User : BaseEntity
 
     // Navigation properties
     public ICollection<UserRole> UserRoles { get; set; } = [];
-    public ICollection<UserMenu> UserMenus { get; set; } = [];
 }

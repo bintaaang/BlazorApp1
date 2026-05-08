@@ -6,10 +6,11 @@ public class Menu : BaseEntity
     public string Url { get; set; } = string.Empty;
     public string? Icon { get; set; }
     public int? ParentId { get; set; }
+    public int ModuleId { get; set; }
     public int Order { get; set; }
     public string PermissionName { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    public Module? Module { get; set; }
     public Menu? Parent { get; set; }
     public ICollection<Menu> Children { get; set; } = [];
-    public ICollection<UserMenu> UserMenus { get; set; } = [];
 }

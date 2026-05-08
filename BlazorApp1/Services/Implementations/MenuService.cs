@@ -18,33 +18,22 @@ public class MenuService : IMenuService
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
 
-        var menus = await context.UserMenus
+        var permissionNames = context.UserRoles
             .AsNoTracking()
-            .Where(um => um.UserId == userId && um.IsActive && um.Menu != null && um.Menu.IsActive)
-            .Select(um => um.Menu!)
-            .OrderBy(m => m.Order)
-            .Select(m => new MenuDto
-            {
-                Id = m.Id,
-                Name = m.Name,
-                Url = m.Url,
-                Icon = m.Icon,
-                ParentId = m.ParentId,
-                Order = m.Order
-            })
-            .ToListAsync();
-
-        return menus;
-    }
-
-    public async Task<List<MenuDto>> GetAllMenusAsync()
-    {
-        await using var context = await _contextFactory.CreateDbContextAsync();
+            .Where(userRole => userRole.UserId == userId && userRole.Role != null)
+            .SelectMany(userRole => userRole.Role!.RolePermissions)
+            .Select(rolePermission => rolePermission.Permission!.Name)
+            .Distinct();
 
         var menus = await context.Menus
             .AsNoTracking()
-            .Where(m => m.IsActive)
-            .OrderBy(m => m.Order)
+            .Where(menu =>
+                menu.IsActive &&
+                menu.Module != null &&
+                menu.Module.IsActive &&
+                permissionNames.Contains(menu.PermissionName))
+            .OrderBy(m => m.Module!.Order)
+            .ThenBy(m => m.Order)
             .Select(m => new MenuDto
             {
                 Id = m.Id,
@@ -52,10 +41,15 @@ public class MenuService : IMenuService
                 Url = m.Url,
                 Icon = m.Icon,
                 ParentId = m.ParentId,
+                ModuleId = m.ModuleId,
+                ModuleName = m.Module!.Name,
+                ModuleIcon = m.Module.Icon,
+                ModuleOrder = m.Module.Order,
                 Order = m.Order
             })
             .ToListAsync();
 
         return menus;
     }
+
 }

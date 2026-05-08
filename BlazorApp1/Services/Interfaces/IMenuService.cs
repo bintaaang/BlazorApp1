@@ -5,5 +5,4 @@ namespace BlazorApp1.Services.Interfaces;
 public interface IMenuService
 {
     Task<List<MenuDto>> GetMenusByUserAsync(int userId);
-    Task<List<MenuDto>> GetAllMenusAsync();
 }
