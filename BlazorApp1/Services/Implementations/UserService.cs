@@ -7,18 +7,21 @@ namespace BlazorApp1.Services.Implementations;
 
 public class UserService : IUserService
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
     private readonly IPermissionService _permissionService;
 
-    public UserService(AppDbContext context, IPermissionService permissionService)
+    public UserService(IDbContextFactory<AppDbContext> contextFactory, IPermissionService permissionService)
     {
-        _context = context;
+        _contextFactory = contextFactory;
         _permissionService = permissionService;
     }
 
     public async Task<UserDto?> GetUserByIdAsync(int userId)
     {
-        var user = await _context.Users
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var user = await context.Users
+            .AsNoTracking()
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Id == userId);
@@ -33,7 +36,10 @@ public class UserService : IUserService
 
     public async Task<UserDto?> GetUserByUsernameAsync(string username)
     {
-        var user = await _context.Users
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var user = await context.Users
+            .AsNoTracking()
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Username == username);
@@ -48,7 +54,10 @@ public class UserService : IUserService
 
     public async Task<List<UserDto>> GetAllUsersAsync()
     {
-        var users = await _context.Users
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var users = await context.Users
+            .AsNoTracking()
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .ToListAsync();

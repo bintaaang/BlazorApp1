@@ -1,6 +1,6 @@
 namespace BlazorApp1.Models.Entities;
 
-public class UserRole
+public class UserRole : AuditableEntity
 {
     public int UserId { get; set; }
     public User? User { get; set; }

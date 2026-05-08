@@ -7,21 +7,21 @@ namespace BlazorApp1.Services.Implementations;
 
 public class MenuService : IMenuService
 {
-    private readonly AppDbContext _context;
-    private readonly IPermissionService _permissionService;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public MenuService(AppDbContext context, IPermissionService permissionService)
+    public MenuService(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
-        _permissionService = permissionService;
+        _contextFactory = contextFactory;
     }
 
     public async Task<List<MenuDto>> GetMenusByUserAsync(int userId)
     {
-        var userPermissions = await _permissionService.GetUserPermissionsAsync(userId);
+        await using var context = await _contextFactory.CreateDbContextAsync();
 
-        var menus = await _context.Menus
-            .Where(m => m.IsActive && userPermissions.Contains(m.PermissionName))
+        var menus = await context.UserMenus
+            .AsNoTracking()
+            .Where(um => um.UserId == userId && um.IsActive && um.Menu != null && um.Menu.IsActive)
+            .Select(um => um.Menu!)
             .OrderBy(m => m.Order)
             .Select(m => new MenuDto
             {
@@ -39,7 +39,10 @@ public class MenuService : IMenuService
 
     public async Task<List<MenuDto>> GetAllMenusAsync()
     {
-        var menus = await _context.Menus
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var menus = await context.Menus
+            .AsNoTracking()
             .Where(m => m.IsActive)
             .OrderBy(m => m.Order)
             .Select(m => new MenuDto

@@ -1,48 +1,33 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <span class="bi bi-app-indicator"></span> Blazor RBAC
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <AuthorizeView>
-                            <Authorized>
-                                <a class="nav-link" href="/profile">
-                                    <span class="bi bi-person"></span> @context.User.FindFirst("FullName")?.Value
-                                </a>
-                            </Authorized>
-                            <NotAuthorized>
-                                <a class="nav-link" href="/login">Login</a>
-                            </NotAuthorized>
-                        </AuthorizeView>
-                    </li>
-                </ul>
-            </div>
+<div class="bb-shell d-flex flex-column min-vh-100">
+    <header class="bb-shell__header">
+        <div class="container-fluid d-flex align-items-center justify-content-between py-3">
+            <a class="bb-shell__brand text-decoration-none" href="/">Blazor RBAC Console</a>
+            <AuthorizeView>
+                <Authorized>
+                    <a class="bb-shell__user text-decoration-none" href="/profile">@context.User.FindFirst("FullName")?.Value</a>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="bb-shell__user text-decoration-none" href="/login">Login</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
-    </nav>
+    </header>
 
     <div class="container-fluid flex-grow-1">
-        <div class="row h-100">
-            <aside class="col-lg-2 bg-light border-end d-none d-lg-block">
-                <nav class="navbar-nav pt-3">
-                    <NavMenu />
-                </nav>
+        <div class="row g-0">
+            <aside class="col-xl-2 col-lg-3 bb-shell__sidebar">
+                <NavMenu />
             </aside>
 
-            <main class="col-lg-10 p-4">
+            <main class="col-xl-10 col-lg-9 p-4 p-xl-5">
                 @Body
             </main>
         </div>
     </div>
 
-    <footer class="bg-dark text-white text-center py-3 mt-auto border-top border-secondary">
-        <p class="mb-0">&copy; 2024 Blazor RBAC App. All rights reserved.</p>
+    <footer class="bb-shell__footer text-center py-3">
+        <small>&copy; 2026 Blazor RBAC App</small>
     </footer>
 </div>

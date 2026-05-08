@@ -4,120 +4,90 @@
 @inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0">My Profile</h1>
-        </div>
+    <div class="bb-page-header">
+        <h1>My Profile</h1>
+        <p>Informasi akun, role, dan permission yang terpasang pada user aktif.</p>
     </div>
 
     <AuthorizeView>
         <Authorized>
             @if (currentUser != null)
             {
-                <div class="row">
-                    <div class="col-lg-8">
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">Personal Information</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold">Full Name</label>
-                                        <p>@currentUser.FullName</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold">Username</label>
-                                        <p>@currentUser.Username</p>
-                                    </div>
-                                </div>
+                <div class="row g-4">
+                    <div class="col-xl-8">
+                        <Card HeaderText="Personal Information">
+                            <BodyTemplate>
+                                <dl class="bb-detail-grid mb-0">
+                                    <dt>Full Name</dt>
+                                    <dd>@currentUser.FullName</dd>
+                                    <dt>Username</dt>
+                                    <dd>@currentUser.Username</dd>
+                                    <dt>Email</dt>
+                                    <dd>@currentUser.Email</dd>
+                                    <dt>User ID</dt>
+                                    <dd>@currentUser.Id</dd>
+                                </dl>
+                            </BodyTemplate>
+                        </Card>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold">Email</label>
-                                        <p>@currentUser.Email</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold">User ID</label>
-                                        <p>@currentUser.Id</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card mt-3">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">Roles & Permissions</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Assigned Roles</label>
-                                    <div>
-                                        @if (currentUser.Roles.Count > 0)
-                                        {
+                        <Card HeaderText="Roles & Permissions" class="mt-4">
+                            <BodyTemplate>
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Assigned Roles</h6>
+                                    @if (currentUser.Roles.Count > 0)
+                                    {
+                                        <div class="d-flex flex-wrap gap-2">
                                             @foreach (var role in currentUser.Roles)
                                             {
-                                                <span class="badge bg-primary me-2">@role</span>
+                                                <span class="badge text-bg-primary">@role</span>
                                             }
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">No roles assigned</span>
-                                        }
-                                    </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-secondary">No roles assigned.</span>
+                                    }
                                 </div>
 
                                 <div>
-                                    <label class="form-label fw-bold">Permissions</label>
-                                    <div>
-                                        @if (currentUser.Permissions.Count > 0)
-                                        {
-                                            <ul class="list-unstyled">
-                                                @foreach (var permission in currentUser.Permissions)
-                                                {
-                                                    <li class="mb-2">
-                                                        <span class="badge bg-success">✓</span> @permission
-                                                    </li>
-                                                }
-                                            </ul>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">No permissions assigned</span>
-                                        }
-                                    </div>
+                                    <h6 class="mb-3">Permissions</h6>
+                                    @if (currentUser.Permissions.Count > 0)
+                                    {
+                                        <ul class="bb-list">
+                                            @foreach (var permission in currentUser.Permissions)
+                                            {
+                                                <li>@permission</li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-secondary">No permissions assigned.</span>
+                                    }
                                 </div>
-                            </div>
-                        </div>
+                            </BodyTemplate>
+                        </Card>
                     </div>
 
-                    <div class="col-lg-4">
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">Quick Info</h5>
-                            </div>
-                            <div class="card-body">
-                                <p class="mb-2">
-                                    <strong>Total Roles:</strong> @currentUser.Roles.Count
-                                </p>
-                                <p class="mb-2">
-                                    <strong>Total Permissions:</strong> @currentUser.Permissions.Count
-                                </p>
-                                <hr />
-                                <p class="text-muted small">
-                                    This is your profile page. All information is retrieved from the database 
-                                    based on your user ID and assigned roles/permissions.
-                                </p>
-                            </div>
-                        </div>
+                    <div class="col-xl-4">
+                        <Card HeaderText="Quick Info" Color="Color.Secondary">
+                            <BodyTemplate>
+                                <div class="bb-mini-stat">
+                                    <span>Total Roles</span>
+                                    <strong>@currentUser.Roles.Count</strong>
+                                </div>
+                                <div class="bb-mini-stat">
+                                    <span>Total Permissions</span>
+                                    <strong>@currentUser.Permissions.Count</strong>
+                                </div>
+                            </BodyTemplate>
+                        </Card>
                     </div>
                 </div>
             }
         </Authorized>
         <NotAuthorized>
-            <div class="alert alert-warning">
-                You do not have permission to access this page.
-            </div>
+            <div class="alert alert-warning">You do not have permission to access this page.</div>
         </NotAuthorized>
     </AuthorizeView>
 </div>

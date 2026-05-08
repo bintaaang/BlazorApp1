@@ -5,80 +5,64 @@
 
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body p-5">
-                    <h2 class="card-title text-center mb-4">Register</h2>
-
+        <div class="col-xl-5 col-lg-6 col-md-8">
+            <Card HeaderText="Register" class="bb-auth-card">
+                <BodyTemplate>
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <div class="alert alert-danger mb-4" role="alert">
                             @errorMessage
-                            <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
                         </div>
                     }
 
                     @if (registrationSuccess)
                     {
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <div class="alert alert-success mb-4" role="alert">
                             <strong>Berhasil!</strong> Silakan login dengan akun baru Anda.
-                            <button type="button" class="btn-close" @onclick="@(() => Navigation.NavigateTo("/login"))"></button>
                         </div>
                     }
 
-                    <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister" FormName="register-form">
-                        <DataAnnotationsValidator />
+                    <ValidateForm Model="@registerModel" OnValidSubmit="@HandleRegister">
+                        <BootstrapBlazorDataAnnotationsValidator />
+                        <ValidationSummary />
 
-                        <div class="mb-3">
-                            <label class="form-label">Nama Lengkap</label>
-                            <InputText class="form-control" @bind-Value="registerModel.FullName" placeholder="Masukkan nama lengkap" />
-                            <ValidationMessage For="@(() => registerModel.FullName)" class="text-danger small" />
-                        </div>
+                        <BootstrapInput @bind-Value="@registerModel.FullName"
+                                        DisplayText="Nama Lengkap"
+                                        ShowLabel="true"
+                                        placeholder="Masukkan nama lengkap" />
 
-                        <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <InputText class="form-control" @bind-Value="registerModel.Username" placeholder="Masukkan username" />
-                            <ValidationMessage For="@(() => registerModel.Username)" class="text-danger small" />
-                        </div>
+                        <BootstrapInput @bind-Value="@registerModel.Username"
+                                        DisplayText="Username"
+                                        ShowLabel="true"
+                                        placeholder="Masukkan username" />
 
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <InputText type="email" class="form-control" @bind-Value="registerModel.Email" placeholder="Masukkan email" />
-                            <ValidationMessage For="@(() => registerModel.Email)" class="text-danger small" />
-                        </div>
+                        <BootstrapInput @bind-Value="@registerModel.Email"
+                                        DisplayText="Email"
+                                        ShowLabel="true"
+                                        type="email"
+                                        placeholder="Masukkan email" />
 
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="registerModel.Password" placeholder="Masukkan password" />
-                            <ValidationMessage For="@(() => registerModel.Password)" class="text-danger small" />
-                        </div>
+                        <BootstrapPassword @bind-Value="@registerModel.Password"
+                                           DisplayText="Password"
+                                           ShowLabel="true"
+                                           placeholder="Masukkan password" />
 
-                        <div class="mb-3">
-                            <label class="form-label">Konfirmasi Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="registerModel.ConfirmPassword" placeholder="Konfirmasi password" />
-                            <ValidationMessage For="@(() => registerModel.ConfirmPassword)" class="text-danger small" />
-                        </div>
+                        <BootstrapPassword @bind-Value="@registerModel.ConfirmPassword"
+                                           DisplayText="Konfirmasi Password"
+                                           ShowLabel="true"
+                                           placeholder="Konfirmasi password" />
 
-                        <button type="submit" class="btn btn-primary w-100 mb-3" disabled="@isLoading">
-                            @if (isLoading)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                                <span>Processing...</span>
-                            }
-                            else
-                            {
-                                <span>Register</span>
-                            }
-                        </button>
-                    </EditForm>
+                        <Button Text="Register"
+                                ButtonType="ButtonType.Submit"
+                                Color="Color.Primary"
+                                class="w-100 mt-3" />
+                    </ValidateForm>
 
-                    <hr class="my-3" />
-
-                    <p class="text-center small mb-0">
-                        Sudah punya akun? <a href="/login" class="text-decoration-none">Login di sini</a>
-                    </p>
-                </div>
-            </div>
+                    <div class="bb-auth-card__footer">
+                        <p class="mb-0">Sudah punya akun? <a href="/login">Login di sini</a></p>
+                    </div>
+                </BodyTemplate>
+            </Card>
         </div>
     </div>
 </div>
@@ -86,12 +70,10 @@
 @code {
     private RegisterRequest registerModel = new();
     private string? errorMessage;
-    private bool isLoading;
     private bool registrationSuccess;
 
-    private async Task HandleRegister()
+    private async Task HandleRegister(EditContext _)
     {
-        isLoading = true;
         errorMessage = null;
         registrationSuccess = false;
 
@@ -103,7 +85,7 @@
             {
                 registrationSuccess = true;
                 registerModel = new();
-                await Task.Delay(2000);
+                await Task.Delay(1500);
                 Navigation.NavigateTo("/login");
             }
             else
@@ -114,10 +96,6 @@
         catch (Exception ex)
         {
             errorMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
         }
     }
 }

@@ -2,80 +2,79 @@
 @attribute [Authorize(Policy = "view_reports")]
 
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0">Reports</h1>
-        </div>
+    <div class="bb-page-header">
+        <h1>Reports</h1>
+        <p>Overview dashboard menggunakan card BootstrapBlazor dengan Bootstrap 5 styling.</p>
     </div>
 
     <AuthorizeView>
         <Authorized>
-            <div class="row">
-                <div class="col-lg-3 mb-3">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h2 class="h4 text-primary">42</h2>
-                            <p class="text-muted mb-0">Total Users</p>
-                        </div>
-                    </div>
+            <div class="row g-4">
+                <div class="col-xl-3 col-md-6">
+                    <Card HeaderText="Total Users" Color="Color.Primary">
+                        <BodyTemplate>
+                            <div class="bb-stat-card">
+                                <div class="bb-stat-card__value">42</div>
+                                <div class="bb-stat-card__meta">registered accounts</div>
+                            </div>
+                        </BodyTemplate>
+                    </Card>
                 </div>
 
-                <div class="col-lg-3 mb-3">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h2 class="h4 text-success">8</h2>
-                            <p class="text-muted mb-0">Active Sessions</p>
-                        </div>
-                    </div>
+                <div class="col-xl-3 col-md-6">
+                    <Card HeaderText="Active Sessions" Color="Color.Success">
+                        <BodyTemplate>
+                            <div class="bb-stat-card">
+                                <div class="bb-stat-card__value">8</div>
+                                <div class="bb-stat-card__meta">live sessions</div>
+                            </div>
+                        </BodyTemplate>
+                    </Card>
                 </div>
 
-                <div class="col-lg-3 mb-3">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h2 class="h4 text-warning">156</h2>
-                            <p class="text-muted mb-0">Page Views</p>
-                        </div>
-                    </div>
+                <div class="col-xl-3 col-md-6">
+                    <Card HeaderText="Page Views" Color="Color.Warning">
+                        <BodyTemplate>
+                            <div class="bb-stat-card">
+                                <div class="bb-stat-card__value">156</div>
+                                <div class="bb-stat-card__meta">today</div>
+                            </div>
+                        </BodyTemplate>
+                    </Card>
                 </div>
 
-                <div class="col-lg-3 mb-3">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h2 class="h4 text-info">98%</h2>
-                            <p class="text-muted mb-0">Uptime</p>
-                        </div>
-                    </div>
+                <div class="col-xl-3 col-md-6">
+                    <Card HeaderText="Uptime" Color="Color.Info">
+                        <BodyTemplate>
+                            <div class="bb-stat-card">
+                                <div class="bb-stat-card__value">98%</div>
+                                <div class="bb-stat-card__meta">availability</div>
+                            </div>
+                        </BodyTemplate>
+                    </Card>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-lg-6 mb-3">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">User Activity</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted">Activity chart would be displayed here</p>
-                        </div>
-                    </div>
+            <div class="row g-4 mt-1">
+                <div class="col-xl-6">
+                    <Card HeaderText="User Activity">
+                        <BodyTemplate>
+                            <p class="text-secondary mb-0">Activity chart placeholder using BootstrapBlazor card shell.</p>
+                        </BodyTemplate>
+                    </Card>
                 </div>
 
-                <div class="col-lg-6 mb-3">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">System Statistics</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted">System stats would be displayed here</p>
-                        </div>
-                    </div>
+                <div class="col-xl-6">
+                    <Card HeaderText="System Statistics">
+                        <BodyTemplate>
+                            <p class="text-secondary mb-0">System statistics placeholder using BootstrapBlazor card shell.</p>
+                        </BodyTemplate>
+                    </Card>
                 </div>
             </div>
         </Authorized>
         <NotAuthorized>
-            <div class="alert alert-warning">
-                You do not have permission to access this page.
-            </div>
+            <div class="alert alert-warning">You do not have permission to access this page.</div>
         </NotAuthorized>
     </AuthorizeView>
 </div>

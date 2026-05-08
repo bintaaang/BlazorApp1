@@ -4,102 +4,86 @@
 @inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0">Dashboard</h1>
-        </div>
+    <div class="bb-page-header">
+        <h1>Dashboard</h1>
+        <p>Ringkasan cepat akses, peran, dan permission user aktif.</p>
     </div>
 
     <AuthorizeView>
         <Authorized>
             @if (currentUser != null)
             {
-                <div class="row">
-                    <div class="col-lg-4 mb-3">
-                        <div class="card bg-primary text-white">
-                            <div class="card-body">
-                                <h6 class="card-title">User Information</h6>
-                                <p class="mb-1"><strong>@currentUser.FullName</strong></p>
-                                <p class="mb-0 small text-white-50">@currentUser.Email</p>
-                            </div>
-                        </div>
+                <div class="row g-4">
+                    <div class="col-xl-4">
+                        <Card HeaderText="User Information" Color="Color.Primary">
+                            <BodyTemplate>
+                                <div class="bb-stat-card">
+                                    <div class="bb-stat-card__value">@currentUser.FullName</div>
+                                    <div class="bb-stat-card__meta">@currentUser.Email</div>
+                                </div>
+                            </BodyTemplate>
+                        </Card>
                     </div>
 
-                    <div class="col-lg-4 mb-3">
-                        <div class="card bg-success text-white">
-                            <div class="card-body">
-                                <h6 class="card-title">Roles</h6>
-                                <p class="mb-0">
-                                    @if (currentUser.Roles.Count > 0)
-                                    {
-                                        @string.Join(", ", currentUser.Roles)
-                                    }
-                                    else
-                                    {
-                                        <span>No roles assigned</span>
-                                    }
-                                </p>
-                            </div>
-                        </div>
+                    <div class="col-xl-4">
+                        <Card HeaderText="Roles" Color="Color.Success">
+                            <BodyTemplate>
+                                <div class="bb-stat-card">
+                                    <div class="bb-stat-card__value">@(currentUser.Roles.Count == 0 ? "0" : currentUser.Roles.Count.ToString())</div>
+                                    <div class="bb-stat-card__meta">@(currentUser.Roles.Count == 0 ? "No roles assigned" : string.Join(", ", currentUser.Roles))</div>
+                                </div>
+                            </BodyTemplate>
+                        </Card>
                     </div>
 
-                    <div class="col-lg-4 mb-3">
-                        <div class="card bg-info text-white">
-                            <div class="card-body">
-                                <h6 class="card-title">Permissions</h6>
-                                <p class="mb-0 small">@currentUser.Permissions.Count permission(s)</p>
-                            </div>
-                        </div>
+                    <div class="col-xl-4">
+                        <Card HeaderText="Permissions" Color="Color.Info">
+                            <BodyTemplate>
+                                <div class="bb-stat-card">
+                                    <div class="bb-stat-card__value">@currentUser.Permissions.Count</div>
+                                    <div class="bb-stat-card__meta">permission(s) available</div>
+                                </div>
+                            </BodyTemplate>
+                        </Card>
                     </div>
                 </div>
 
-                <div class="row mt-4">
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">Your Permissions</h5>
-                            </div>
-                            <div class="card-body">
+                <div class="row g-4 mt-1">
+                    <div class="col-xl-6">
+                        <Card HeaderText="Your Permissions">
+                            <BodyTemplate>
                                 @if (currentUser.Permissions.Count > 0)
                                 {
-                                    <div class="list-group">
+                                    <ul class="bb-list">
                                         @foreach (var permission in currentUser.Permissions)
                                         {
-                                            <a class="list-group-item list-group-item-action">
-                                                <span class="badge bg-success me-2">✓</span>@permission
-                                            </a>
+                                            <li>@permission</li>
                                         }
-                                    </div>
+                                    </ul>
                                 }
                                 else
                                 {
-                                    <p class="text-muted">No permissions assigned</p>
+                                    <span class="text-secondary">No permissions assigned.</span>
                                 }
-                            </div>
-                        </div>
+                            </BodyTemplate>
+                        </Card>
                     </div>
 
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">Welcome Message</h5>
-                            </div>
-                            <div class="card-body">
-                                <p>Welcome to the Blazor RBAC Application, <strong>@currentUser.FullName</strong>!</p>
-                                <p class="text-muted small">
-                                    This application demonstrates role-based access control (RBAC) with dynamic permissions 
-                                    from the database. All menus and page access are controlled based on your assigned permissions.
+                    <div class="col-xl-6">
+                        <Card HeaderText="Welcome Message">
+                            <BodyTemplate>
+                                <p>Welcome to the Blazor RBAC Application, <strong>@currentUser.FullName</strong>.</p>
+                                <p class="text-secondary mb-0">
+                                    Semua akses halaman, menu, dan tindakan user saat ini dikontrol lewat role serta permission dari database.
                                 </p>
-                            </div>
-                        </div>
+                            </BodyTemplate>
+                        </Card>
                     </div>
                 </div>
             }
         </Authorized>
         <NotAuthorized>
-            <div class="alert alert-warning">
-                You do not have permission to access this page.
-            </div>
+            <div class="alert alert-warning">You do not have permission to access this page.</div>
         </NotAuthorized>
     </AuthorizeView>
 </div>

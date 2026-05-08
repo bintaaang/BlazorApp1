@@ -1,8 +1,7 @@
 namespace BlazorApp1.Models.Entities;
 
-public class Menu
+public class Menu : BaseEntity
 {
-    public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
     public string? Icon { get; set; }
@@ -10,5 +9,7 @@ public class Menu
     public int Order { get; set; }
     public string PermissionName { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Menu? Parent { get; set; }
+    public ICollection<Menu> Children { get; set; } = [];
+    public ICollection<UserMenu> UserMenus { get; set; } = [];
 }
