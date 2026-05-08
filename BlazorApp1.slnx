@@ -1,3 +1,4 @@
 <Solution>
+  <Folder Name="/Library/" />
   <Project Path="BlazorApp1/BlazorApp1.csproj" />
 </Solution>

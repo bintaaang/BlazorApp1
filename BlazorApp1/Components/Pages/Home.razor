@@ -1,7 +1,20 @@
-﻿@page "/"
+@page "/"
+@layout EmptyLayout
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Redirecting...</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container py-5 text-center">
+    <p class="text-muted mb-0">Redirecting...</p>
+</div>
 
-Welcome to your new app.
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var target = authState.User.Identity?.IsAuthenticated == true ? "/dashboard" : "/login";
+
+        Navigation.NavigateTo(target, replace: true);
+    }
+}

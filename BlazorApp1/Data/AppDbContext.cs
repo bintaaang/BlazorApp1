@@ -9,16 +9,37 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<User> Users { get; set; }
-    public DbSet<Role> Roles { get; set; }
-    public DbSet<Permission> Permissions { get; set; }
-    public DbSet<RolePermission> RolePermissions { get; set; }
-    public DbSet<UserRole> UserRoles { get; set; }
-    public DbSet<Menu> Menus { get; set; }
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Menu> Menus => Set<Menu>();
+    public DbSet<UserMenu> UserMenus => Set<UserMenu>();
+
+    public override int SaveChanges()
+    {
+        ApplyAuditInfo();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ApplyAuditInfo();
+        return base.SaveChangesAsync(cancellationToken);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<User>().ToTable("AppUsers");
+        modelBuilder.Entity<Role>().ToTable("AppRoles");
+        modelBuilder.Entity<Permission>().ToTable("AppPermissions");
+        modelBuilder.Entity<Menu>().ToTable("AppMenus");
+        modelBuilder.Entity<UserRole>().ToTable("AppUserRoles");
+        modelBuilder.Entity<RolePermission>().ToTable("AppRolePermissions");
+        modelBuilder.Entity<UserMenu>().ToTable("AppUserMenus");
 
         // RolePermission composite key
         modelBuilder.Entity<RolePermission>()
@@ -52,6 +73,28 @@ public class AppDbContext : DbContext
             .HasForeignKey(ur => ur.RoleId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // UserMenu composite key
+        modelBuilder.Entity<UserMenu>()
+            .HasKey(um => new { um.UserId, um.MenuId });
+
+        modelBuilder.Entity<UserMenu>()
+            .HasOne(um => um.User)
+            .WithMany(u => u.UserMenus)
+            .HasForeignKey(um => um.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserMenu>()
+            .HasOne(um => um.Menu)
+            .WithMany(m => m.UserMenus)
+            .HasForeignKey(um => um.MenuId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Menu>()
+            .HasOne(m => m.Parent)
+            .WithMany(m => m.Children)
+            .HasForeignKey(m => m.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Add indexes
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
@@ -71,5 +114,27 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Menu>()
             .HasIndex(m => m.Url);
+
+        modelBuilder.Entity<UserMenu>()
+            .HasIndex(um => new { um.UserId, um.IsActive });
+    }
+
+    private void ApplyAuditInfo()
+    {
+        var now = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt = now;
+                entry.Entity.CreatedBy ??= "system";
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = now;
+                entry.Entity.UpdatedBy ??= "system";
+            }
+        }
     }
 }

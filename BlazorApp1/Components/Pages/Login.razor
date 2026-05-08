@@ -1,65 +1,50 @@
 @page "/login"
 @layout EmptyLayout
-@inject IAuthService AuthService
-@inject CustomAuthStateProvider AuthStateProvider
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
+@using Microsoft.AspNetCore.WebUtilities
 
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body p-5">
-                    <h2 class="card-title text-center mb-4">Login</h2>
-
+        <div class="col-xl-4 col-lg-5 col-md-7">
+            <Card HeaderText="Login" class="bb-auth-card">
+                <BodyTemplate>
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <div class="alert alert-danger mb-4" role="alert">
                             @errorMessage
-                            <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
                         </div>
                     }
 
-                    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
-                        <DataAnnotationsValidator />
+                    <form method="post" action="/auth/login">
+                        <BootstrapInput @bind-Value="@loginModel.Username"
+                                        name="Username"
+                                        DisplayText="Username"
+                                        ShowLabel="true"
+                                        placeholder="Enter username" />
 
-                        <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <InputText class="form-control" @bind-Value="loginModel.Username" placeholder="Enter username" />
-                            <ValidationMessage For="@(() => loginModel.Username)" class="text-danger small" />
+                        <BootstrapPassword @bind-Value="@loginModel.Password"
+                                           name="Password"
+                                           DisplayText="Password"
+                                           ShowLabel="true"
+                                           placeholder="Enter password" />
+
+                        <Button Text="Login"
+                                ButtonType="ButtonType.Submit"
+                                Color="Color.Primary"
+                                class="w-100 mt-3" />
+                    </form>
+
+                    <div class="bb-auth-card__footer">
+                        <p class="mb-2">Belum punya akun? <a href="/register">Register di sini</a></p>
+                        <div class="alert alert-info mb-0">
+                            <strong>Demo Credentials</strong><br />
+                            Admin: admin / admin123<br />
+                            User: user / user123
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="loginModel.Password" placeholder="Enter password" />
-                            <ValidationMessage For="@(() => loginModel.Password)" class="text-danger small" />
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100 mb-3" disabled="@isLoading">
-                            @if (isLoading)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                                <span>Loading...</span>
-                            }
-                            else
-                            {
-                                <span>Login</span>
-                            }
-                        </button>
-                    </EditForm>
-
-                    <hr class="my-3" />
-
-                    <p class="text-center small mb-0">
-                        Belum punya akun? <a href="/register" class="text-decoration-none">Register di sini</a>
-                    </p>
-
-                    <div class="alert alert-info mt-3 small">
-                        <strong>Demo Credentials:</strong><br />
-                        Admin: admin / admin123<br />
-                        User: user / user123
                     </div>
-                </div>
-            </div>
+                </BodyTemplate>
+            </Card>
         </div>
     </div>
 </div>
@@ -67,34 +52,20 @@
 @code {
     private LoginRequest loginModel = new();
     private string? errorMessage;
-    private bool isLoading;
 
-    private async Task HandleLogin()
+    protected override async Task OnInitializedAsync()
     {
-        isLoading = true;
-        errorMessage = null;
-
-        try
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
         {
-            var response = await AuthService.LoginAsync(loginModel);
-
-            if (response.Success && response.User != null)
-            {
-                await AuthStateProvider.LoginAsync(response.User);
-                Navigation.NavigateTo("/dashboard");
-            }
-            else
-            {
-                errorMessage = response.Message;
-            }
+            Navigation.NavigateTo("/dashboard", replace: true);
+            return;
         }
-        catch (Exception ex)
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("error", out var errorValues))
         {
-            errorMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
+            errorMessage = errorValues.ToString();
         }
     }
 }

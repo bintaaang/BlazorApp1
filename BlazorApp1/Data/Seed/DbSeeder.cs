@@ -151,6 +151,37 @@ public static class DbSeeder
 
             await context.SaveChangesAsync();
         }
+
+        // Seed UserMenus
+        if (!context.UserMenus.Any())
+        {
+            var users = context.Users.ToList();
+            var menus = context.Menus.ToList();
+
+            foreach (var user in users)
+            {
+                var roleNames = context.UserRoles
+                    .Where(ur => ur.UserId == user.Id)
+                    .Select(ur => ur.Role!.Name)
+                    .ToList();
+
+                var allowedMenus = roleNames.Contains("Admin")
+                    ? menus
+                    : menus.Where(m => m.PermissionName == "view_dashboard" || m.PermissionName == "view_profile").ToList();
+
+                foreach (var menu in allowedMenus)
+                {
+                    context.UserMenus.Add(new UserMenu
+                    {
+                        UserId = user.Id,
+                        MenuId = menu.Id,
+                        IsActive = true
+                    });
+                }
+            }
+
+            await context.SaveChangesAsync();
+        }
     }
 
     private static string HashPassword(string password)

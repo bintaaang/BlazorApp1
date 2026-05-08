@@ -3,106 +3,67 @@
 @inject IUserService UserService
 
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0">User Management</h1>
-        </div>
+    <div class="bb-page-header">
+        <h1>User Management</h1>
+        <p>Tabel user menggunakan komponen `Table` dari BootstrapBlazor.</p>
     </div>
 
     <AuthorizeView>
-        <Authorized>
-            <div class="card">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">All Users</h5>
-                    <button class="btn btn-sm btn-primary">
-                        <span class="bi bi-plus-circle me-1"></span>Add User
-                    </button>
-                </div>
-                <div class="card-body p-0">
-                    @if (users != null && users.Count > 0)
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Username</th>
-                                        <th>Full Name</th>
-                                        <th>Email</th>
-                                        <th>Roles</th>
-                                        <th>Permissions</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var user in users)
-                                    {
-                                        <tr>
-                                            <td>@user.Id</td>
-                                            <td><strong>@user.Username</strong></td>
-                                            <td>@user.FullName</td>
-                                            <td>@user.Email</td>
-                                            <td>
-                                                @if (user.Roles.Count > 0)
-                                                {
-                                                    @foreach (var role in user.Roles)
-                                                    {
-                                                        <span class="badge bg-primary">@role</span>
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted small">-</span>
-                                                }
-                                            </td>
-                                            <td>@user.Permissions.Count</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-warning" title="Edit">
-                                                    <span class="bi bi-pencil"></span>
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" title="Delete">
-                                                    <span class="bi bi-trash"></span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else if (isLoading)
-                    {
-                        <div class="p-4 text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="p-4 text-center text-muted">
-                            No users found
-                        </div>
-                    }
-                </div>
-            </div>
+        <Authorized Context="authState">
+            @if (isLoading)
+            {
+                <div class="py-5 text-center text-secondary">Loading users...</div>
+            }
+            else
+            {
+                <Card HeaderText="All Users">
+                    <BodyTemplate>
+                        <Table TItem="UserGridItem" Items="@rows" IsBordered="true" IsStriped="true" ShowToolbar="true">
+                            <TableColumn TItem="UserGridItem" TType="int" Text="ID" FieldName="@nameof(UserGridItem.Id)" Width="90" />
+                            <TableColumn TItem="UserGridItem" TType="string" Text="Username" FieldName="@nameof(UserGridItem.Username)" />
+                            <TableColumn TItem="UserGridItem" TType="string" Text="Full Name" FieldName="@nameof(UserGridItem.FullName)" />
+                            <TableColumn TItem="UserGridItem" TType="string" Text="Email" FieldName="@nameof(UserGridItem.Email)" />
+                            <TableColumn TItem="UserGridItem" TType="string" Text="Roles" FieldName="@nameof(UserGridItem.RolesText)" />
+                            <TableColumn TItem="UserGridItem" TType="int" Text="Permissions" FieldName="@nameof(UserGridItem.PermissionCount)" />
+                        </Table>
+                    </BodyTemplate>
+                </Card>
+            }
         </Authorized>
         <NotAuthorized>
-            <div class="alert alert-warning">
-                You do not have permission to access this page.
-            </div>
+            <div class="alert alert-warning">You do not have permission to access this page.</div>
         </NotAuthorized>
     </AuthorizeView>
 </div>
 
 @code {
-    private List<UserDto>? users;
+    private List<UserGridItem> rows = [];
     private bool isLoading;
 
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
-        users = await UserService.GetAllUsersAsync();
+        rows = (await UserService.GetAllUsersAsync())
+            .Select(user => new UserGridItem
+            {
+                Id = user.Id,
+                Username = user.Username,
+                FullName = user.FullName,
+                Email = user.Email,
+                RolesText = user.Roles.Count == 0 ? "-" : string.Join(", ", user.Roles),
+                PermissionCount = user.Permissions.Count
+            })
+            .ToList();
         isLoading = false;
+    }
+
+    private sealed class UserGridItem
+    {
+        public int Id { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string RolesText { get; set; } = string.Empty;
+        public int PermissionCount { get; set; }
     }
 }

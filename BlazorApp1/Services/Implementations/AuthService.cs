@@ -9,25 +9,24 @@ namespace BlazorApp1.Services.Implementations;
 
 public class AuthService : IAuthService
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
     private readonly IPermissionService _permissionService;
-    private readonly IUserService _userService;
-
     public AuthService(
-        AppDbContext context,
-        IPermissionService permissionService,
-        IUserService userService)
+        IDbContextFactory<AppDbContext> contextFactory,
+        IPermissionService permissionService)
     {
-        _context = context;
+        _contextFactory = contextFactory;
         _permissionService = permissionService;
-        _userService = userService;
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
         try
         {
-            var user = await _context.Users
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
+            var user = await context.Users
+                .AsNoTracking()
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Username == request.Username && u.IsActive);
@@ -69,13 +68,15 @@ public class AuthService : IAuthService
     {
         try
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
             if (request.Password != request.ConfirmPassword)
                 return (false, "Password tidak cocok");
 
-            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+            if (await context.Users.AnyAsync(u => u.Username == request.Username))
                 return (false, "Username sudah terdaftar");
 
-            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+            if (await context.Users.AnyAsync(u => u.Email == request.Email))
                 return (false, "Email sudah terdaftar");
 
             var user = new Models.Entities.User
@@ -87,19 +88,36 @@ public class AuthService : IAuthService
                 IsActive = true
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
 
             // Assign default "User" role
-            var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
             if (userRole != null)
             {
-                _context.UserRoles.Add(new Models.Entities.UserRole
+                context.UserRoles.Add(new Models.Entities.UserRole
                 {
                     UserId = user.Id,
                     RoleId = userRole.Id
                 });
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
+            }
+
+            var defaultMenus = await context.Menus
+                .Where(m => m.IsActive && (m.PermissionName == "view_dashboard" || m.PermissionName == "view_profile"))
+                .ToListAsync();
+
+            if (defaultMenus.Count > 0)
+            {
+                var userMenus = defaultMenus.Select(menu => new Models.Entities.UserMenu
+                {
+                    UserId = user.Id,
+                    MenuId = menu.Id,
+                    IsActive = true
+                });
+
+                context.UserMenus.AddRange(userMenus);
+                await context.SaveChangesAsync();
             }
 
             return (true, "Register berhasil");
