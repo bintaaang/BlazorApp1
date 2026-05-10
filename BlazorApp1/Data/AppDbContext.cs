@@ -1,4 +1,4 @@
-using BlazorApp1.Models.Entities;
+using BlazorApp1.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlazorApp1.Data;
@@ -13,9 +13,11 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Module> Modules => Set<Module>();
     public DbSet<Menu> Menus => Set<Menu>();
+    public DbSet<CustomerData> CustomerData => Set<CustomerData>();
 
     public override int SaveChanges()
     {
@@ -38,8 +40,10 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Permission>().ToTable("AppPermissions");
         modelBuilder.Entity<Module>().ToTable("AppModules");
         modelBuilder.Entity<Menu>().ToTable("AppMenus");
+        modelBuilder.Entity<CustomerData>().ToTable("CustomerData");
         modelBuilder.Entity<UserRole>().ToTable("AppUserRoles");
         modelBuilder.Entity<RolePermission>().ToTable("AppRolePermissions");
+        modelBuilder.Entity<UserPermission>().ToTable("AppUserPermissions");
 
         // RolePermission composite key
         modelBuilder.Entity<RolePermission>()
@@ -55,6 +59,21 @@ public class AppDbContext : DbContext
             .HasOne(rp => rp.Permission)
             .WithMany(p => p.RolePermissions)
             .HasForeignKey(rp => rp.PermissionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserPermission>()
+            .HasKey(up => new { up.UserId, up.PermissionId });
+
+        modelBuilder.Entity<UserPermission>()
+            .HasOne(up => up.User)
+            .WithMany(u => u.UserPermissions)
+            .HasForeignKey(up => up.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserPermission>()
+            .HasOne(up => up.Permission)
+            .WithMany(p => p.UserPermissions)
+            .HasForeignKey(up => up.PermissionId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // UserRole composite key
@@ -85,6 +104,12 @@ public class AppDbContext : DbContext
             .HasForeignKey(m => m.ParentId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<User>()
+            .HasOne(user => user.CustomerData)
+            .WithMany(customer => customer.Users)
+            .HasForeignKey(user => user.CustomerDataId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Add indexes
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
@@ -108,6 +133,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Module>()
             .HasIndex(m => m.Name)
             .IsUnique();
+
+        modelBuilder.Entity<CustomerData>()
+            .HasIndex(customer => customer.CustomerName);
     }
 
     private void ApplyAuditInfo()

@@ -1,4 +1,4 @@
-using BlazorApp1.Models.Entities;
+using BlazorApp1.Models;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -24,7 +24,6 @@ public static class DbSeeder
             var permissions = new[]
             {
                 new Permission { Name = "view_dashboard", Description = "View Dashboard" },
-                new Permission { Name = "view_profile", Description = "View Profile" },
                 new Permission { Name = "manage_users", Description = "Manage Users" },
                 new Permission { Name = "view_reports", Description = "View Reports" }
             };
@@ -51,8 +50,7 @@ public static class DbSeeder
             }
 
             // User gets limited permissions
-            var userPermissions = permissions.Where(p =>
-                p.Name == "view_dashboard" || p.Name == "view_profile").ToList();
+            var userPermissions = permissions.Where(p => p.Name == "view_dashboard").ToList();
 
             foreach (var permission in userPermissions)
             {
@@ -86,16 +84,6 @@ public static class DbSeeder
                     ModuleId = mainModuleId,
                     Order = 1,
                     PermissionName = "view_dashboard",
-                    IsActive = true
-                },
-                new Menu
-                {
-                    Name = "Profile",
-                    Url = "/profile",
-                    Icon = "bi bi-person",
-                    ModuleId = mainModuleId,
-                    Order = 2,
-                    PermissionName = "view_profile",
                     IsActive = true
                 },
                 new Menu
@@ -212,7 +200,6 @@ public static class DbSeeder
         var moduleByUrl = new Dictionary<string, int>
         {
             ["/dashboard"] = mainModuleId,
-            ["/profile"] = mainModuleId,
             ["/admin/users"] = adminModuleId,
             ["/admin/reports"] = adminModuleId
         };

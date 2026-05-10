@@ -4,8 +4,16 @@ using BlazorApp1.Infrastructure.Authorization;
 using BlazorApp1.Infrastructure.Database;
 using BlazorApp1.Infrastructure.Endpoints;
 using BlazorApp1.Infrastructure.Middleware;
-using BlazorApp1.Services.Implementations;
-using BlazorApp1.Services.Interfaces;
+using BlazorApp1.Services.Administration.Permission.Interfaces;
+using BlazorApp1.Services.Administration.Permission.Services;
+using BlazorApp1.Services.Administration.UserManagement.Interfaces;
+using BlazorApp1.Services.Administration.UserManagement.Services;
+using BlazorApp1.Services.ApplicationMenu.Interfaces;
+using BlazorApp1.Services.ApplicationMenu.Services;
+using BlazorApp1.Services.Auth.Interfaces;
+using BlazorApp1.Services.Auth.Services;
+using BlazorApp1.Services.MasterData.CustomerData.Interfaces;
+using BlazorApp1.Services.MasterData.CustomerData.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +42,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICustomerDataService, CustomerDataService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
@@ -41,9 +50,9 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseNpgsql(defaultConnection));
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("view_dashboard", policy => policy.Requirements.Add(new PermissionRequirement("view_dashboard")))
-    .AddPolicy("view_profile", policy => policy.Requirements.Add(new PermissionRequirement("view_profile")))
     .AddPolicy("manage_users", policy => policy.Requirements.Add(new PermissionRequirement("manage_users")))
-    .AddPolicy("view_reports", policy => policy.Requirements.Add(new PermissionRequirement("view_reports")));
+    .AddPolicy("view_reports", policy => policy.Requirements.Add(new PermissionRequirement("view_reports")))
+    .AddPolicy("view_customer", policy => policy.Requirements.Add(new PermissionRequirement("view_customer")));
 
 var app = builder.Build();
 await app.InitializeDatabaseAsync();

@@ -1,0 +1,195 @@
+@page "/master/customer"
+@attribute [Authorize(Policy = "view_customer")]
+@inject ICustomerDataService Service
+@inject AuthenticationStateProvider AuthStateProvider
+@inject MessageService MessageService
+
+<h4 class="text-primary">Customer Data</h4>
+
+@if (IsTable)
+{
+    <div class="card border-light">
+        <div class="card-body">
+            @if (datas == null)
+            {
+                <p>Loading ...</p>
+            }
+            else
+            {
+                <Table @ref="tableRef"
+                       TItem="BlazorApp1.Models.CustomerData"
+                       IsStriped="true"
+                       IsBordered="true"
+                       IsTracking="true"
+                       ShowSkeleton="false"
+                       OnQueryAsync="@OnQueryAsync"
+                       IsPagination="true"
+                       PageItemsSource="@PageItemsSource"
+                       ShowRefresh="false"
+                       ShowToolbar="true"
+                       ShowDefaultButtons="false">
+                    <TableColumns>
+                        <TableColumn @bind-Field="@context.Id" Text="ID" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.CustomerName" Text="Customer Name" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.CustomerType" Text="Customer Type" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.CreatedAt" Text="Created At" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.CreatedBy" Text="Created By" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.UpdatedAt" Text="Updated At" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.UpdatedBy" Text="Updated By" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.Id" Text="" Width="70" Filterable="false" Sortable="false">
+                            <Template Context="x">
+                                <PopConfirmButton Color="Color.None"
+                                                  Icon="fa-solid fa-trash"
+                                                  IsAsync="true"
+                                                  Size="Size.ExtraSmall"
+                                                  Content="Are you sure to remove this item?"
+                                                  OnConfirm="() => Delete(x.Value)" />
+                                <span class="w-50"></span>
+                                <Button Color="Color.None"
+                                        Icon="fa-solid fa-pen"
+                                        Size="Size.ExtraSmall"
+                                        OnClick="() => Edit(x.Value)" />
+                            </Template>
+                        </TableColumn>
+                    </TableColumns>
+                    <TableExtensionToolbarTemplate>
+                        <Button Text="Add"
+                                ButtonStyle="ButtonStyle.None"
+                                Icon="bi bi-plus-lg"
+                                Color="Color.Link"
+                                OnClick="AddNew" />
+                    </TableExtensionToolbarTemplate>
+                </Table>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <ValidateForm Model="@data" OnValidSubmit="@OnValidSubmit">
+        <BootstrapBlazorDataAnnotationsValidator />
+
+        <div class="row g-3">
+            <div class="col-12 col-sm-6">
+                <div class="card border-light">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <BootstrapInput @bind-Value="@data.CustomerName" ShowLabel="true" ShowRequired="true" />
+                            </div>
+                            <div class="col-12">
+                                <BootstrapInput @bind-Value="@data.CustomerType" ShowLabel="true" ShowRequired="true" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mt-3">
+            <Button ButtonType="@ButtonType.Submit" Color="Color.Primary" IsOutline Icon="fa-solid fa-floppy-disk" IsAsync="true" Text="Save" />
+            <Button ButtonType="@ButtonType.Button" Color="Color.Secondary" IsOutline Icon="fa-solid fa-xmark" IsAsync="true" Text="Cancel" OnClick="@(() => IsTable = true)" />
+        </div>
+    </ValidateForm>
+}
+
+@code
+{
+    private List<BlazorApp1.Models.CustomerData>? datas = [];
+    private BlazorApp1.Models.CustomerData data = new();
+    private Table<BlazorApp1.Models.CustomerData>? tableRef;
+    private bool IsTable = true;
+    private string mode = "input";
+    private string currentUser = "system";
+
+    private static IEnumerable<int> PageItemsSource => new int[] { 10, 20, 50 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        currentUser = user.Identity?.Name ?? "system";
+
+        await RefreshTable();
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        string result;
+        if (mode == "input")
+        {
+            data.CreatedBy = currentUser;
+            result = await Service.CreateCustomerDataAsync(data);
+        }
+        else
+        {
+            data.UpdatedBy = currentUser;
+            result = await Service.UpdateCustomerDataAsync(data);
+        }
+
+        if (result == "ok")
+        {
+            await RefreshTable();
+        }
+        else
+        {
+            await MessageService.Show(new MessageOption()
+            {
+                Icon = "fa-solid fa-circle-info",
+                Color = Color.Danger,
+                Content = result
+            });
+        }
+    }
+
+    private async Task RefreshTable()
+    {
+        datas = await Service.GetAllCustomerDataAsync();
+        IsTable = true;
+
+        if (tableRef != null)
+        {
+            await tableRef.QueryAsync(1);
+        }
+    }
+
+    private void AddNew()
+    {
+        mode = "input";
+        data = new BlazorApp1.Models.CustomerData();
+        IsTable = false;
+    }
+
+    private async Task Edit(int id)
+    {
+        var customer = await Service.GetCustomerDataByIdAsync(id);
+        if (customer != null)
+        {
+            mode = "edit";
+            data = customer;
+            IsTable = false;
+        }
+    }
+
+    private async Task Delete(int id)
+    {
+        var result = await Service.DeleteCustomerDataAsync(id);
+        if (result == "ok")
+        {
+            await RefreshTable();
+        }
+        else
+        {
+            await MessageService.Show(new MessageOption()
+            {
+                Icon = "fa-solid fa-circle-info",
+                Color = Color.Danger,
+                Content = result
+            });
+        }
+    }
+
+    private async Task<QueryData<BlazorApp1.Models.CustomerData>> OnQueryAsync(QueryPageOptions options)
+        => await TableQuery.BuildAsync(datas ?? [], options);
+}
