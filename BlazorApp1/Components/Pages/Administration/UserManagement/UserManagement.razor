@@ -1,0 +1,392 @@
+@page "/admin/users"
+@attribute [Authorize(Policy = "manage_users")]
+@using BlazorApp1.Models
+@inject IUserService UserService
+@inject ICustomerDataService CustomerDataService
+@inject MessageService MessageService
+
+<div class="container-fluid">
+    <h4 class="text-primary">User Management</h4>
+
+    <AuthorizeView>
+        <Authorized>
+            @if (IsTable)
+            {
+                <div class="card border-light">
+                    <div class="card-body">
+                        @if (datas == null)
+                        {
+                            <p>Loading ...</p>
+                        }
+                        else
+                        {
+                            <Table @ref="tableRef"
+                                   TItem="User"
+                                   IsStriped="true"
+                                   IsBordered="true"
+                                   IsTracking="true"
+                                   ShowSkeleton="false"
+                                   OnQueryAsync="@OnQueryAsync"
+                                   IsPagination="true"
+                                   PageItemsSource="@PageItemsSource"
+                                   ShowRefresh="false"
+                                   ShowToolbar="true"
+                                   ShowDefaultButtons="false">
+                                <TableColumns Context="userColumn">
+                                    <TableColumn @bind-Field="@userColumn.Id" Text="ID" Sortable="true" Filterable="true" />
+                                    <TableColumn @bind-Field="@userColumn.Username" Text="Username" Sortable="true" Filterable="true" />
+                                    <TableColumn @bind-Field="@userColumn.FullName" Text="Full Name" Sortable="true" Filterable="true" />
+                                    <TableColumn @bind-Field="@userColumn.Email" Text="Email" Sortable="true" Filterable="true" />
+                                    <TableColumn @bind-Field="@userColumn.CustomerName" Text="Customer" Sortable="true" Filterable="true" />
+                                    <TableColumn @bind-Field="@userColumn.StatusText" Text="Status" Sortable="true" Filterable="true" />
+                                    <TableColumn @bind-Field="@userColumn.RolesText" Text="Role" Sortable="true" Filterable="true" />
+                                    <TableColumn @bind-Field="@userColumn.PermissionCount" Text="Permissions" Sortable="true" Filterable="true" />
+                                    <TableColumn @bind-Field="@userColumn.Id" Text="" Width="70" Filterable="false" Sortable="false">
+                                        <Template Context="x">
+                                            <PopConfirmButton Color="Color.None"
+                                                              Icon="fa-solid fa-trash"
+                                                              IsAsync="true"
+                                                              Size="Size.ExtraSmall"
+                                                              Content="Are you sure to remove this item?"
+                                                              OnConfirm="() => Delete(x.Value)" />
+                                            <span class="w-50"></span>
+                                            <Button Color="Color.None"
+                                                    Icon="fa-solid fa-pen"
+                                                    Size="Size.ExtraSmall"
+                                                    OnClick="() => Edit(x.Value)" />
+                                        </Template>
+                                    </TableColumn>
+                                </TableColumns>
+                                <TableExtensionToolbarTemplate>
+                                    <Button Text="Add"
+                                            ButtonStyle="ButtonStyle.None"
+                                            Icon="bi bi-plus-lg"
+                                            Color="Color.Link"
+                                            OnClick="AddNew" />
+                                </TableExtensionToolbarTemplate>
+                            </Table>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <ValidateForm Model="@data" OnValidSubmit="@OnValidSubmit">
+                    <BootstrapBlazorDataAnnotationsValidator />
+
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <div class="card border-light">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <BootstrapInput @bind-Value="@data.FullName" ShowLabel="true" />
+                                        </div>
+                                        <div class="col-12">
+                                            <BootstrapInput @bind-Value="@data.Username" ShowLabel="true" />
+                                        </div>
+                                        <div class="col-12">
+                                            <BootstrapInput @bind-Value="@data.Email" ShowLabel="true" type="email" />
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Role</label>
+                                            <Select TValue="string"
+                                                    Items="@roleOptions"
+                                                    @bind-Value="@data.RoleName"
+                                                    ShowLabel="false"
+                                                    PlaceHolder="Pilih role"
+                                                    ShowSearch="true" />
+                                        </div>
+                                        @if (ShowCustomerSelect)
+                                        {
+                                            <div class="col-12">
+                                                <SelectTable TItem="CustomerData"
+                                                             @bind-Value="selectedCustomer"
+                                                             OnQueryAsync="OnQueryCustomerAsync"
+                                                             CollapsedTopSearch
+                                                             Height="300"
+                                                             SkipValidate
+                                                             Placeholder="Pilih customer"
+                                                             DisplayText="Customer"
+                                                             ShowLabel="true"
+                                                             ShowSearch="true"
+                                                             IsPagination="true"
+                                                             GetTextCallback="@(item => $"{item.CustomerName} | {item.CustomerType}")">
+                                                    <TableColumns Context="customerColumn">
+                                                        <TableColumn @bind-Field="@customerColumn.Id" Text="ID" />
+                                                        <TableColumn @bind-Field="@customerColumn.CustomerName" Text="Customer Name" />
+                                                        <TableColumn @bind-Field="@customerColumn.CustomerType" Text="Customer Type" />
+                                                    </TableColumns>
+                                                </SelectTable>
+                                            </div>
+                                        }
+                                        <div class="col-12">
+                                            <BootstrapPassword @bind-Value="@data.Password"
+                                                               ShowLabel="true"
+                                                               PlaceHolder="@(mode == "edit" ? "Kosongkan jika tidak diubah" : "Masukkan password")" />
+                                        </div>
+                                        <div class="col-12">
+                                            <BootstrapPassword @bind-Value="@data.ConfirmPassword"
+                                                               ShowLabel="true"
+                                                               PlaceHolder="@(mode == "edit" ? "Ulangi password baru bila diubah" : "Konfirmasi password")" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (ShowMenuAccessOptions)
+                        {
+                            <div class="col-12 col-sm-6">
+                                <div class="card border-light">
+                                    <div class="card-body">
+                                        <h6 class="text-primary mb-3">Akses Menu</h6>
+
+                                        @foreach (var moduleGroup in menuAccessOptions.GroupBy(menu => menu.ModuleName))
+                                        {
+                                            <div class="mb-3">
+                                                <div class="fw-semibold mb-2">@moduleGroup.Key</div>
+                                                <div class="row g-2">
+                                                    @foreach (var menu in moduleGroup)
+                                                    {
+                                                        <div class="col-12 col-lg-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input"
+                                                                       type="checkbox"
+                                                                       id="@($"menu-access-{menu.Id}")"
+                                                                       checked="@HasMenuPermission(menu.PermissionName)"
+                                                                       @onchange="args => SetMenuPermission(menu.PermissionName, args)" />
+                                                                <label class="form-check-label" for="@($"menu-access-{menu.Id}")">
+                                                                    @if (!string.IsNullOrWhiteSpace(menu.Icon))
+                                                                    {
+                                                                        <i class="@menu.Icon me-1"></i>
+                                                                    }
+                                                                    @menu.Name
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="col-12 mt-3">
+                        <Button ButtonType="@ButtonType.Submit"
+                                Color="Color.Primary"
+                                IsOutline
+                                Icon="fa-solid fa-floppy-disk"
+                                IsAsync="true"
+                                Text="Save" />
+                        <Button ButtonType="@ButtonType.Button"
+                                Color="Color.Secondary"
+                                IsOutline
+                                Icon="fa-solid fa-xmark"
+                                IsAsync="true"
+                                Text="Cancel"
+                                OnClick="@(() => IsTable = true)" />
+                    </div>
+                </ValidateForm>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-warning">You do not have permission to access this page.</div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code
+{
+    private List<User>? datas = [];
+    private User data = new();
+    private Table<User>? tableRef;
+    private List<SelectedItem> roleOptions = [];
+    private List<BlazorApp1.Models.Menu> menuAccessOptions = [];
+    private List<CustomerData> customerDataOptions = [];
+    private CustomerData? selectedCustomer;
+    private bool IsTable = true;
+    private string mode = "input";
+
+    private bool ShowMenuAccessOptions => !data.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+    private bool ShowCustomerSelect => data.RoleName.Equals("User", StringComparison.OrdinalIgnoreCase);
+
+    private static IEnumerable<int> PageItemsSource => new int[] { 10, 20, 50 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        roleOptions = (await UserService.GetRoleNamesAsync())
+            .Select((roleName, index) => new SelectedItem(roleName, roleName) { Active = index == 0 })
+            .ToList();
+        menuAccessOptions = await UserService.GetMenuAccessOptionsAsync();
+        customerDataOptions = await CustomerDataService.GetAllCustomerDataAsync();
+
+        await RefreshTable();
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        data.CustomerDataId = ShowCustomerSelect ? selectedCustomer?.Id : null;
+
+        var result = mode == "input"
+            ? await UserService.CreateUserAsync(data)
+            : await UserService.UpdateUserAsync(data.Id, data);
+
+        if (result.Success)
+        {
+            await MessageService.Show(new MessageOption()
+            {
+                Icon = "fa-solid fa-circle-info",
+                Color = Color.Success,
+                Content = result.Message
+            });
+
+            await RefreshTable();
+        }
+        else
+        {
+            await MessageService.Show(new MessageOption()
+            {
+                Icon = "fa-solid fa-circle-info",
+                Color = Color.Danger,
+                Content = result.Message
+            });
+        }
+    }
+
+    private async Task RefreshTable()
+    {
+        try
+        {
+            datas = await UserService.GetAllUsersAsync();
+            IsTable = true;
+
+            if (tableRef != null)
+            {
+                await tableRef.QueryAsync(1);
+            }
+        }
+        catch (Exception ex)
+        {
+            datas = [];
+            await MessageService.Show(new MessageOption()
+            {
+                Icon = "fa-solid fa-circle-info",
+                Color = Color.Danger,
+                Content = $"Gagal memuat user: {ex.Message}"
+            });
+        }
+    }
+
+    private void AddNew()
+    {
+        mode = "input";
+        data = new User
+        {
+            IsActive = true,
+            RoleName = roleOptions.FirstOrDefault(role => role.Value == "User")?.Value
+                ?? roleOptions.FirstOrDefault()?.Value
+                ?? "User"
+        };
+        selectedCustomer = null;
+        IsTable = false;
+    }
+
+    private async Task Edit(int id)
+    {
+        var user = await UserService.GetUserByIdAsync(id);
+        if (user != null)
+        {
+            mode = "edit";
+            data = new User
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                FullName = user.FullName,
+                RoleName = user.Roles.FirstOrDefault() ?? "User",
+                IsActive = user.IsActive,
+                IsEditMode = true,
+                CustomerDataId = user.CustomerDataId,
+                CustomerName = user.CustomerName,
+                CustomerType = user.CustomerType,
+                MenuPermissions = user.MenuPermissions
+            };
+            selectedCustomer = user.CustomerDataId.HasValue
+                ? customerDataOptions.FirstOrDefault(customer => customer.Id == user.CustomerDataId.Value)
+                : null;
+            IsTable = false;
+        }
+        else
+        {
+            await MessageService.Show(new MessageOption()
+            {
+                Icon = "fa-solid fa-circle-info",
+                Color = Color.Danger,
+                Content = "Data user tidak ditemukan."
+            });
+        }
+    }
+
+    private async Task Delete(int id)
+    {
+        var result = await UserService.DeleteUserAsync(id);
+        if (result.Success)
+        {
+            await RefreshTable();
+        }
+        else
+        {
+            await MessageService.Show(new MessageOption()
+            {
+                Icon = "fa-solid fa-circle-info",
+                Color = Color.Danger,
+                Content = result.Message
+            });
+        }
+    }
+
+    private bool HasMenuPermission(string permissionName)
+    {
+        return data.MenuPermissions.Contains(permissionName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void SetMenuPermission(string permissionName, ChangeEventArgs args)
+    {
+        var isChecked = args.Value is bool value && value;
+
+        if (isChecked && !HasMenuPermission(permissionName))
+        {
+            data.MenuPermissions.Add(permissionName);
+        }
+        else if (!isChecked)
+        {
+            data.MenuPermissions.RemoveAll(permission =>
+                permission.Equals(permissionName, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private async Task<QueryData<User>> OnQueryAsync(QueryPageOptions options)
+        => await TableQuery.BuildAsync(datas ?? [], options, UserMatchesSearch);
+
+    private async Task<QueryData<CustomerData>> OnQueryCustomerAsync(QueryPageOptions options)
+        => await TableQuery.BuildAsync(customerDataOptions, options, CustomerMatchesSearch);
+
+    private static bool UserMatchesSearch(User user, string keyword)
+        => user.Id.ToString().Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           user.Username.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           user.FullName.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           user.Email.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           user.CustomerName.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           user.StatusText.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           user.RolesText.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           user.PermissionCount.ToString().Contains(keyword, StringComparison.OrdinalIgnoreCase);
+
+    private static bool CustomerMatchesSearch(CustomerData customer, string keyword)
+        => customer.Id.ToString().Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           customer.CustomerName.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+           customer.CustomerType.Contains(keyword, StringComparison.OrdinalIgnoreCase);
+}

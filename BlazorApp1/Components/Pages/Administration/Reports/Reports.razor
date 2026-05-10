@@ -1,0 +1,72 @@
+@page "/admin/reports"
+@attribute [Authorize(Policy = "view_reports")]
+
+<div class="container-fluid">
+    <div class="mb-4">
+        <h1 class="h2 fw-bold mb-1">Reports</h1>
+        <p class="text-secondary mb-0">Overview dashboard menggunakan card BootstrapBlazor dengan Bootstrap 5 styling.</p>
+    </div>
+
+    <AuthorizeView>
+        <Authorized>
+            <div class="row g-4">
+                <div class="col-xl-3 col-md-6">
+                    <Card HeaderText="Total Users" Color="Color.Primary">
+                        <BodyTemplate>
+                            <div class="fs-3 fw-bold lh-sm">42</div>
+                            <div class="mt-1">registered accounts</div>
+                        </BodyTemplate>
+                    </Card>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <Card HeaderText="Active Sessions" Color="Color.Success">
+                        <BodyTemplate>
+                            <div class="fs-3 fw-bold lh-sm">8</div>
+                            <div class="mt-1">live sessions</div>
+                        </BodyTemplate>
+                    </Card>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <Card HeaderText="Page Views" Color="Color.Warning">
+                        <BodyTemplate>
+                            <div class="fs-3 fw-bold lh-sm">156</div>
+                            <div class="mt-1">today</div>
+                        </BodyTemplate>
+                    </Card>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <Card HeaderText="Uptime" Color="Color.Info">
+                        <BodyTemplate>
+                            <div class="fs-3 fw-bold lh-sm">98%</div>
+                            <div class="mt-1">availability</div>
+                        </BodyTemplate>
+                    </Card>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+                <div class="col-xl-6">
+                    <Card HeaderText="User Activity">
+                        <BodyTemplate>
+                            <p class="text-secondary mb-0">Activity chart placeholder using BootstrapBlazor card shell.</p>
+                        </BodyTemplate>
+                    </Card>
+                </div>
+
+                <div class="col-xl-6">
+                    <Card HeaderText="System Statistics">
+                        <BodyTemplate>
+                            <p class="text-secondary mb-0">System statistics placeholder using BootstrapBlazor card shell.</p>
+                        </BodyTemplate>
+                    </Card>
+                </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-warning">You do not have permission to access this page.</div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>

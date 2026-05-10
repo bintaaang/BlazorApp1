@@ -1,35 +1,189 @@
 @inherits LayoutComponentBase
+@inject IMenuService MenuService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <BootstrapBlazorRoot>
-    <div class="bb-shell d-flex flex-column min-vh-100">
-        <header class="bb-shell__header">
-            <div class="container-fluid d-flex align-items-center justify-content-between py-3">
-                <a class="bb-shell__brand text-decoration-none" href="/">Blazor RBAC Console</a>
+    <Layout ShowGotoTop="true"
+            ShowCollapseBar="true"
+            IsCollapsed="@isNavCollapsed"
+            ShowFooter="true"
+            IsPage="true"
+            IsFullSide="true"
+            IsFixedHeader="true"
+            IsFixedFooter="true"
+            Menus="@menus"
+            OnClickMenu="@OnClickMenu"
+            class="bg-light">
+        <CollapseBarTemplate>
+            <Button class="btn btn-light border-0 bg-transparent"
+                    Color="Color.Light"
+                    Icon="fa-solid fa-bars"
+                    OnClick="ToggleNavMenu" />
+        </CollapseBarTemplate>
+        <Header>
+            <div class="d-flex align-items-center gap-3 w-100">
+                <a class="text-dark fw-bold text-decoration-none" href="/">Blazor RBAC Console</a>
+                <div class="flex-fill"></div>
                 <AuthorizeView>
                     <Authorized>
-                        <a class="bb-shell__user text-decoration-none" href="/profile">@context.User.FindFirst("FullName")?.Value</a>
+                        @{
+                            var displayName = context.User.FindFirst("FullName")?.Value
+                                ?? context.User.Identity?.Name
+                                ?? "User";
+                            var username = context.User.Identity?.Name ?? displayName;
+                        }
+                        <Logout ImageUrl="favicon.ico"
+                                ShowUserName="false"
+                                DisplayName="@displayName"
+                                UserName="@username">
+                            <HeaderTemplate>
+                                <strong>@displayName</strong>
+                            </HeaderTemplate>
+                            <LinkTemplate>
+                                <a href="/profile"><i class="fa-solid fa-user"></i>Profile</a>
+                                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+                            </LinkTemplate>
+                        </Logout>
                     </Authorized>
                     <NotAuthorized>
-                        <a class="bb-shell__user text-decoration-none" href="/login">Login</a>
+                        <a class="text-secondary fw-semibold text-decoration-none" href="/login">Login</a>
                     </NotAuthorized>
                 </AuthorizeView>
             </div>
-        </header>
-
-        <div class="container-fluid flex-grow-1">
-            <div class="row g-0">
-                <aside class="col-xl-2 col-lg-3 bb-shell__sidebar">
-                    <NavMenu />
-                </aside>
-
-                <main class="col-xl-10 col-lg-9 p-4 p-xl-5">
-                    @Body
-                </main>
+        </Header>
+        <Side>
+            <div class="layout-banner py-4">
+                <div class="layout-logo d-inline-flex align-items-center justify-content-center text-white fs-4">
+                    <i class="bi bi-truck" aria-hidden="true"></i>
+                </div>
+                <div class="layout-title">
+                    <h5 class="mb-0">Blazor</h5>
+                    <span>RBAC Console</span>
+                </div>
             </div>
-        </div>
-
-        <footer class="bb-shell__footer text-center py-3">
-            <small>&copy; 2026 Blazor RBAC App</small>
-        </footer>
-    </div>
+        </Side>
+        <Main>
+            <div class="p-4 p-xl-5">
+                @Body
+            </div>
+        </Main>
+        <Footer>
+            <div class="text-center flex-fill">
+                <small>&copy; 2026 Blazor RBAC App</small>
+            </div>
+        </Footer>
+    </Layout>
 </BootstrapBlazorRoot>
+
+<style>
+    .layout {
+        --bb-layout-header-background: #ffffff;
+        --bb-layout-header-border-color: #ffffff;
+        --bb-layout-header-color: #0f172a;
+        --bb-layout-sidebar-background: #223b51;
+        --bb-layout-sidebar-banner-background: #223b51;
+        --bb-layout-banner-border-color: #223b51;
+        --bb-layout-logo-bg: #223b51;
+        --bb-layout-logo-border-color: #223b51;
+        --bb-layout-banner-logo-width: 50px;
+        --bb-layout-menu-item-hover-bg: rgba(255, 255, 255, 0.12);
+        --bb-layout-footer-background: #ffffff;
+        --bb-layout-footer-color: #6b7280;
+    }
+
+    .layout-menu,
+    .layout-banner {
+        background-color: #223b51;
+    }
+
+    .menu-icon,
+    .menu-text {
+        color: #e5e7eb;
+    }
+
+    .menu .nav .nav-link.active {
+        background: rgba(255, 255, 255, 0.14);
+        font-weight: 600;
+    }
+</style>
+
+@code {
+    private bool isNavCollapsed;
+    private List<MenuItem> menus = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        menus = [new MenuItem("Home", "/", "fa-solid fa-fw fa-home") { Match = NavLinkMatch.All }];
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var userIdClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim is null || !int.TryParse(userIdClaim.Value, out var userId))
+        {
+            return;
+        }
+
+        var menuItems = await MenuService.GetMenusByUserAsync(userId);
+        menus = BuildMenuItems(menuItems);
+    }
+
+    private void ToggleNavMenu()
+        => isNavCollapsed = !isNavCollapsed;
+
+    private Task OnClickMenu(MenuItem item)
+        => Task.CompletedTask;
+
+    private static List<MenuItem> BuildMenuItems(IEnumerable<BlazorApp1.Models.Menu> menuItems)
+    {
+        var result = new List<MenuItem>
+        {
+            new("Home", "/", "fa-solid fa-fw fa-home") { Match = NavLinkMatch.All }
+        };
+
+        result.AddRange(menuItems
+            .GroupBy(item => new { item.ModuleId, item.ModuleName, item.ModuleIcon, item.ModuleOrder })
+            .OrderBy(group => group.Key.ModuleOrder)
+            .Select(group => new MenuItem(group.Key.ModuleName, string.Empty, group.Key.ModuleIcon ?? string.Empty)
+            {
+                Match = NavLinkMatch.All,
+                Items = group
+                    .OrderBy(menu => menu.Order)
+                    .Select(menu => new MenuItem(menu.Name, ToRootedUrl(menu.Url), menu.Icon ?? "bi bi-dot")
+                    {
+                        Match = NavLinkMatch.All
+                    })
+                    .ToList()
+            }));
+
+        return result;
+    }
+
+    private static string ToRootedUrl(string? url)
+    {
+        var normalized = NormalizeUrl(url);
+        return string.IsNullOrWhiteSpace(normalized) ? "/" : $"/{normalized}";
+    }
+
+    private static string NormalizeUrl(string? url)
+    {
+        var normalized = (url ?? string.Empty).Trim();
+        if (normalized.StartsWith('/'))
+        {
+            normalized = normalized[1..];
+        }
+
+        var queryIndex = normalized.IndexOfAny(['?', '#']);
+        if (queryIndex >= 0)
+        {
+            normalized = normalized[..queryIndex];
+        }
+
+        return normalized.TrimEnd('/');
+    }
+}
