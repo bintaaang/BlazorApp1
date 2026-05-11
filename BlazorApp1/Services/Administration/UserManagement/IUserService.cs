@@ -1,6 +1,6 @@
 using BlazorApp1.Models;
 
-namespace BlazorApp1.Services.Administration.UserManagement.Interfaces;
+namespace BlazorApp1.Services.Administration.UserManagement;
 
 public interface IUserService
 {

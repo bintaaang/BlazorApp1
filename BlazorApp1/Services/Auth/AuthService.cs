@@ -1,12 +1,11 @@
 using BlazorApp1.Data;
 using BlazorApp1.Models;
-using BlazorApp1.Services.Administration.Permission.Interfaces;
-using BlazorApp1.Services.Auth.Interfaces;
+using BlazorApp1.Services.Administration.Permission;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BlazorApp1.Services.Auth.Services;
+namespace BlazorApp1.Services.Auth;
 
 public class AuthService : IAuthService
 {
@@ -28,19 +27,23 @@ public class AuthService : IAuthService
 
             var user = await context.Users
                 .AsNoTracking()
-                .Include(u => u.UserRoles)
-                .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.Username == request.Username && u.IsActive);
+                .Include(user => user.UserRoles)
+                .ThenInclude(userRole => userRole.Role)
+                .FirstOrDefaultAsync(user => user.Username == request.Username && user.IsActive);
 
             if (user == null)
+            {
                 return new LoginResponse { Success = false, Message = "User tidak ditemukan" };
+            }
 
             var passwordHash = HashPassword(request.Password);
             if (user.PasswordHash != passwordHash)
+            {
                 return new LoginResponse { Success = false, Message = "Password salah" };
+            }
 
             var permissions = await _permissionService.GetUserPermissionsAsync(user.Id);
-            var roles = user.UserRoles.Select(ur => ur.Role!.Name).ToList();
+            var roles = user.UserRoles.Select(userRole => userRole.Role!.Name).ToList();
 
             var userModel = new User
             {

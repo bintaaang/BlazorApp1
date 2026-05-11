@@ -1,6 +1,6 @@
 using BlazorApp1.Models;
 
-namespace BlazorApp1.Services.Auth.Interfaces;
+namespace BlazorApp1.Services.Auth;
 
 public interface IAuthService
 {

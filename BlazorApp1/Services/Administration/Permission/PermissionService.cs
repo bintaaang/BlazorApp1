@@ -1,8 +1,7 @@
 using BlazorApp1.Data;
-using BlazorApp1.Services.Administration.Permission.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace BlazorApp1.Services.Administration.Permission.Services;
+namespace BlazorApp1.Services.Administration.Permission;
 
 public class PermissionService : IPermissionService
 {
@@ -19,8 +18,8 @@ public class PermissionService : IPermissionService
 
         var userPermissions = context.UserPermissions
             .AsNoTracking()
-            .Where(up => up.UserId == userId)
-            .Select(up => up.Permission!.Name);
+            .Where(userPermission => userPermission.UserId == userId)
+            .Select(userPermission => userPermission.Permission!.Name);
 
         if (!await IsAdminAsync(context, userId))
         {
@@ -31,9 +30,9 @@ public class PermissionService : IPermissionService
 
         var rolePermissions = context.UserRoles
             .AsNoTracking()
-            .Where(ur => ur.UserId == userId)
-            .SelectMany(ur => ur.Role!.RolePermissions)
-            .Select(rp => rp.Permission!.Name);
+            .Where(userRole => userRole.UserId == userId)
+            .SelectMany(userRole => userRole.Role!.RolePermissions)
+            .Select(rolePermission => rolePermission.Permission!.Name);
 
         return await rolePermissions
             .Union(userPermissions)
@@ -45,6 +44,9 @@ public class PermissionService : IPermissionService
     {
         return context.UserRoles
             .AsNoTracking()
-            .AnyAsync(ur => ur.UserId == userId && ur.Role != null && ur.Role.Name == "Admin");
+            .AnyAsync(userRole =>
+                userRole.UserId == userId &&
+                userRole.Role != null &&
+                userRole.Role.Name == "Admin");
     }
 }

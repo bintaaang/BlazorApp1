@@ -3,6 +3,7 @@
 @inject ICustomerDataService Service
 @inject AuthenticationStateProvider AuthStateProvider
 @inject MessageService MessageService
+@using CustomerDataModel = BlazorApp1.Models.CustomerData
 
 <h4 class="text-primary">Customer Data</h4>
 
@@ -17,7 +18,7 @@
             else
             {
                 <Table @ref="tableRef"
-                       TItem="BlazorApp1.Models.CustomerData"
+                       TItem="CustomerDataModel"
                        IsStriped="true"
                        IsBordered="true"
                        IsTracking="true"
@@ -95,9 +96,9 @@ else
 
 @code
 {
-    private List<BlazorApp1.Models.CustomerData>? datas = [];
-    private BlazorApp1.Models.CustomerData data = new();
-    private Table<BlazorApp1.Models.CustomerData>? tableRef;
+    private List<CustomerDataModel>? datas = [];
+    private CustomerDataModel data = new();
+    private Table<CustomerDataModel>? tableRef;
     private bool IsTable = true;
     private string mode = "input";
     private string currentUser = "system";
@@ -157,7 +158,7 @@ else
     private void AddNew()
     {
         mode = "input";
-        data = new BlazorApp1.Models.CustomerData();
+        data = new CustomerDataModel();
         IsTable = false;
     }
 
@@ -190,6 +191,6 @@ else
         }
     }
 
-    private async Task<QueryData<BlazorApp1.Models.CustomerData>> OnQueryAsync(QueryPageOptions options)
+    private async Task<QueryData<CustomerDataModel>> OnQueryAsync(QueryPageOptions options)
         => await TableQuery.BuildAsync(datas ?? [], options);
 }

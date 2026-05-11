@@ -1,4 +1,4 @@
-namespace BlazorApp1.Services.Administration.Permission.Interfaces;
+namespace BlazorApp1.Services.Administration.Permission;
 
 public interface IPermissionService
 {

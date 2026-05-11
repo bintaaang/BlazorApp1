@@ -1,9 +1,8 @@
 using BlazorApp1.Data;
-using BlazorApp1.Models;
-using BlazorApp1.Services.MasterData.CustomerData.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using CustomerDataModel = BlazorApp1.Models.CustomerData;
 
-namespace BlazorApp1.Services.MasterData.CustomerData.Services;
+namespace BlazorApp1.Services.MasterData.CustomerData;
 
 public class CustomerDataService : ICustomerDataService
 {
@@ -14,7 +13,7 @@ public class CustomerDataService : ICustomerDataService
         _contextFactory = contextFactory;
     }
 
-    public async Task<List<BlazorApp1.Models.CustomerData>> GetAllCustomerDataAsync()
+    public async Task<List<CustomerDataModel>> GetAllCustomerDataAsync()
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
 
@@ -24,7 +23,7 @@ public class CustomerDataService : ICustomerDataService
             .ToListAsync();
     }
 
-    public async Task<BlazorApp1.Models.CustomerData?> GetCustomerDataByIdAsync(int id)
+    public async Task<CustomerDataModel?> GetCustomerDataByIdAsync(int id)
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
 
@@ -33,7 +32,7 @@ public class CustomerDataService : ICustomerDataService
             .FirstOrDefaultAsync(customer => customer.Id == id);
     }
 
-    public async Task<string> CreateCustomerDataAsync(BlazorApp1.Models.CustomerData data)
+    public async Task<string> CreateCustomerDataAsync(CustomerDataModel data)
     {
         try
         {
@@ -53,7 +52,7 @@ public class CustomerDataService : ICustomerDataService
         }
     }
 
-    public async Task<string> UpdateCustomerDataAsync(BlazorApp1.Models.CustomerData data)
+    public async Task<string> UpdateCustomerDataAsync(CustomerDataModel data)
     {
         try
         {
