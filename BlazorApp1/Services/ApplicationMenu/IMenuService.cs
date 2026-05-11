@@ -1,6 +1,6 @@
 using BlazorApp1.Models;
 
-namespace BlazorApp1.Services.ApplicationMenu.Interfaces;
+namespace BlazorApp1.Services.ApplicationMenu;
 
 public interface IMenuService
 {

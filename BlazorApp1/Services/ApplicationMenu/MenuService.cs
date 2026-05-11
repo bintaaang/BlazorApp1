@@ -1,9 +1,8 @@
 using BlazorApp1.Data;
 using BlazorApp1.Models;
-using BlazorApp1.Services.ApplicationMenu.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace BlazorApp1.Services.ApplicationMenu.Services;
+namespace BlazorApp1.Services.ApplicationMenu;
 
 public class MenuService : IMenuService
 {
@@ -54,24 +53,23 @@ public class MenuService : IMenuService
                 menu.Module.IsActive &&
                 permissionNames.Contains(menu.PermissionName))
             .OrderBy(m => m.Module!.Order)
-            .ThenBy(m => m.Order)
-            .Select(m => new Menu
+            .ThenBy(menu => menu.Order)
+            .Select(menu => new Menu
             {
-                Id = m.Id,
-                Name = m.Name,
-                Url = m.Url,
-                Icon = m.Icon,
-                ParentId = m.ParentId,
-                ModuleId = m.ModuleId,
-                ModuleName = m.Module!.Name,
-                ModuleIcon = m.Module.Icon,
-                ModuleOrder = m.Module.Order,
-                Order = m.Order,
-                PermissionName = m.PermissionName
+                Id = menu.Id,
+                Name = menu.Name,
+                Url = menu.Url,
+                Icon = menu.Icon,
+                ParentId = menu.ParentId,
+                ModuleId = menu.ModuleId,
+                ModuleName = menu.Module!.Name,
+                ModuleIcon = menu.Module.Icon,
+                ModuleOrder = menu.Module.Order,
+                Order = menu.Order,
+                PermissionName = menu.PermissionName
             })
             .ToListAsync();
 
         return menus;
     }
-
 }

@@ -1,12 +1,11 @@
 using BlazorApp1.Data;
 using BlazorApp1.Models;
-using BlazorApp1.Services.Administration.Permission.Interfaces;
-using BlazorApp1.Services.Administration.UserManagement.Interfaces;
+using BlazorApp1.Services.Administration.Permission;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BlazorApp1.Services.Administration.UserManagement.Services;
+namespace BlazorApp1.Services.Administration.UserManagement;
 
 public class UserService : IUserService
 {
@@ -25,15 +24,17 @@ public class UserService : IUserService
 
         var user = await context.Users
             .AsNoTracking()
-            .Include(u => u.UserRoles)
-            .ThenInclude(ur => ur.Role)
-            .Include(u => u.UserPermissions)
-            .ThenInclude(up => up.Permission)
-            .Include(u => u.CustomerData)
-            .FirstOrDefaultAsync(u => u.Id == userId);
+            .Include(user => user.UserRoles)
+            .ThenInclude(userRole => userRole.Role)
+            .Include(user => user.UserPermissions)
+            .ThenInclude(userPermission => userPermission.Permission)
+            .Include(user => user.CustomerData)
+            .FirstOrDefaultAsync(user => user.Id == userId);
 
         if (user == null)
+        {
             return null;
+        }
 
         var permissions = await _permissionService.GetUserPermissionsAsync(userId);
 
@@ -46,14 +47,14 @@ public class UserService : IUserService
 
         var users = await context.Users
             .AsNoTracking()
-            .Include(u => u.UserRoles)
-            .ThenInclude(ur => ur.Role)
-            .ThenInclude(r => r!.RolePermissions)
-            .ThenInclude(rp => rp.Permission)
-            .Include(u => u.UserPermissions)
-            .ThenInclude(up => up.Permission)
-            .Include(u => u.CustomerData)
-            .OrderBy(u => u.Username)
+            .Include(user => user.UserRoles)
+            .ThenInclude(userRole => userRole.Role)
+            .ThenInclude(role => role!.RolePermissions)
+            .ThenInclude(rolePermission => rolePermission.Permission)
+            .Include(user => user.UserPermissions)
+            .ThenInclude(userPermission => userPermission.Permission)
+            .Include(user => user.CustomerData)
+            .OrderBy(user => user.Username)
             .ToListAsync();
 
         return users
@@ -63,8 +64,8 @@ public class UserService : IUserService
                 var userMenuPermissions = GetUserMenuPermissions(user);
                 var rolePermissions = roles.Contains("Admin")
                     ? user.UserRoles
-                        .SelectMany(ur => ur.Role?.RolePermissions ?? [])
-                        .Select(rp => rp.Permission?.Name)
+                        .SelectMany(userRole => userRole.Role?.RolePermissions ?? [])
+                        .Select(rolePermission => rolePermission.Permission?.Name)
                     : [];
                 var permissions = rolePermissions
                     .Concat(userMenuPermissions)
@@ -132,7 +133,7 @@ public class UserService : IUserService
                 return validationResult;
             }
 
-            var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == request.RoleName);
+            var role = await context.Roles.FirstOrDefaultAsync(role => role.Name == request.RoleName);
             if (role == null)
             {
                 return (false, "Role tidak ditemukan");
@@ -172,8 +173,8 @@ public class UserService : IUserService
             await using var context = await _contextFactory.CreateDbContextAsync();
 
             var user = await context.Users
-                .Include(u => u.UserRoles)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                .Include(user => user.UserRoles)
+                .FirstOrDefaultAsync(user => user.Id == userId);
 
             if (user == null)
             {
@@ -186,7 +187,7 @@ public class UserService : IUserService
                 return validationResult;
             }
 
-            var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == request.RoleName);
+            var role = await context.Roles.FirstOrDefaultAsync(role => role.Name == request.RoleName);
             if (role == null)
             {
                 return (false, "Role tidak ditemukan");
@@ -223,7 +224,7 @@ public class UserService : IUserService
         {
             await using var context = await _contextFactory.CreateDbContextAsync();
 
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await context.Users.FirstOrDefaultAsync(user => user.Id == userId);
             if (user == null)
             {
                 return (false, "User tidak ditemukan");
@@ -245,7 +246,7 @@ public class UserService : IUserService
         List<string> permissions,
         List<string>? menuPermissions = null)
     {
-        var roles = user.UserRoles.Select(ur => ur.Role!.Name).ToList();
+        var roles = user.UserRoles.Select(userRole => userRole.Role!.Name).ToList();
 
         return new User
         {
@@ -269,7 +270,7 @@ public class UserService : IUserService
     private static List<string> GetUserMenuPermissions(User user)
     {
         return user.UserPermissions
-            .Select(up => up.Permission?.Name)
+            .Select(userPermission => userPermission.Permission?.Name)
             .Where(permission => !string.IsNullOrWhiteSpace(permission))
             .Distinct()
             .Select(permission => permission!)
@@ -284,12 +285,12 @@ public class UserService : IUserService
         var username = request.Username.Trim();
         var email = request.Email.Trim();
 
-        if (await context.Users.AnyAsync(u => u.Username == username && u.Id != currentUserId))
+        if (await context.Users.AnyAsync(user => user.Username == username && user.Id != currentUserId))
         {
             return (false, "Username sudah terdaftar");
         }
 
-        if (await context.Users.AnyAsync(u => u.Email == email && u.Id != currentUserId))
+        if (await context.Users.AnyAsync(user => user.Email == email && user.Id != currentUserId))
         {
             return (false, "Email sudah terdaftar");
         }
@@ -300,7 +301,7 @@ public class UserService : IUserService
     private static async Task SyncUserRoleAsync(AppDbContext context, int userId, int roleId)
     {
         var existingRoles = await context.UserRoles
-            .Where(ur => ur.UserId == userId)
+            .Where(userRole => userRole.UserId == userId)
             .ToListAsync();
 
         if (existingRoles.Count == 1 && existingRoles[0].RoleId == roleId)
@@ -321,7 +322,7 @@ public class UserService : IUserService
     private static async Task SyncUserPermissionsAsync(AppDbContext context, int userId, User request)
     {
         var existingPermissions = await context.UserPermissions
-            .Where(up => up.UserId == userId)
+            .Where(userPermission => userPermission.UserId == userId)
             .ToListAsync();
 
         context.UserPermissions.RemoveRange(existingPermissions);
