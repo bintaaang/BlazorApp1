@@ -3,21 +3,11 @@
 @inject AuthenticationStateProvider AuthStateProvider
 
 <BootstrapBlazorRoot>
-    <Layout ShowGotoTop="true"
-            ShowCollapseBar="true"
-            IsCollapsed="@isNavCollapsed"
-            ShowFooter="true"
-            IsPage="true"
-            IsFullSide="true"
-            IsFixedHeader="true"
-            IsFixedFooter="true"
-            Menus="@menus"
-            OnClickMenu="@OnClickMenu"
+    <Layout ShowGotoTop="true" ShowCollapseBar="true" IsCollapsed="@isNavCollapsed" ShowFooter="true" IsPage="true"
+            IsFullSide="true" IsFixedHeader="true" IsFixedFooter="true" Menus="@menus" OnClickMenu="@OnClickMenu"
             class="bg-light">
         <CollapseBarTemplate>
-            <Button class="btn btn-light border-0 bg-transparent"
-                    Color="Color.Light"
-                    Icon="fa-solid fa-bars"
+            <Button class="btn btn-light border-0 bg-transparent" Color="Color.Light" Icon="fa-solid fa-bars"
                     OnClick="ToggleNavMenu" />
         </CollapseBarTemplate>
         <Header>
@@ -32,9 +22,7 @@
                                 ?? "User";
                             var username = context.User.Identity?.Name ?? displayName;
                         }
-                        <Logout ImageUrl="favicon.ico"
-                                ShowUserName="false"
-                                DisplayName="@displayName"
+                        <Logout ImageUrl="favicon.ico" ShowUserName="false" DisplayName="@displayName"
                                 UserName="@username">
                             <HeaderTemplate>
                                 <strong>@displayName</strong>
@@ -52,13 +40,13 @@
             </div>
         </Header>
         <Side>
-            <div class="layout-banner py-4">
-                <div class="layout-logo d-inline-flex align-items-center justify-content-center text-white fs-4">
+            <div class="layout-banner">
+                @* <div class="layout-logo d-inline-flex align-items-center justify-content-center text-white fs-4">
                     <i class="bi bi-truck" aria-hidden="true"></i>
-                </div>
-                <div class="layout-title">
-                    <h5 class="mb-0">Blazor</h5>
-                    <span>RBAC Console</span>
+                </div> *@
+                <div class="layout-title text-center">
+                    <h5 class="text-center m-0">Blazor App</h5>
+                    @* <span>RBAC Console</span> *@
                 </div>
             </div>
         </Side>

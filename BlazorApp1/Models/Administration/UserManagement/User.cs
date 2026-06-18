@@ -6,6 +6,8 @@ namespace BlazorApp1.Models;
 
 public class User : BaseEntity, IValidatableObject
 {
+    public int? TenantId { get; set; }
+
     [Display(Name = "Username")]
     [PlaceHolder("Masukkan username")]
     [Required(ErrorMessage = "Username wajib diisi")]
@@ -28,6 +30,7 @@ public class User : BaseEntity, IValidatableObject
     [PlaceHolder("Pilih status")]
     public bool IsActive { get; set; } = true;
     public int? CustomerDataId { get; set; }
+    public Tenant? Tenant { get; set; }
     public CustomerData? CustomerData { get; set; }
 
     // Navigation properties

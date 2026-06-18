@@ -1,0 +1,220 @@
+@page "/billing/invoices"
+@attribute [Authorize(Policy = "view_invoices")]
+@inject ISaasManagementService Service
+@inject AuthenticationStateProvider AuthStateProvider
+@inject MessageService MessageService
+
+<div class="container-fluid">
+    <div class="mb-4">
+        <h1 class="h2 fw-bold mb-1">Invoices</h1>
+        <p class="text-secondary mb-0">Kelola tagihan tenant, relasi work order, status pembayaran, dan nilai piutang.</p>
+    </div>
+
+    @if (showTable)
+    {
+        <div class="card border-light">
+            <div class="card-body">
+                <Table TItem="Invoice" Items="invoices" IsStriped="true" IsBordered="true" IsPagination="true" PageItemsSource="@PageItemsSource" ShowToolbar="true" ShowDefaultButtons="false">
+                    <TableColumns>
+                        <TableColumn @bind-Field="@context.InvoiceNumber" Text="Invoice Number" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.CustomerDataId" Text="Customer">
+                            <Template Context="x">@(x.Row.CustomerData?.CustomerName ?? "-")</Template>
+                        </TableColumn>
+                        <TableColumn @bind-Field="@context.TenantId" Text="Tenant">
+                            <Template Context="x">@(x.Row.Tenant?.BusinessName ?? "-")</Template>
+                        </TableColumn>
+                        <TableColumn @bind-Field="@context.WorkOrderId" Text="Work Order">
+                            <Template Context="x">@(x.Row.WorkOrder?.OrderNumber ?? "-")</Template>
+                        </TableColumn>
+                        <TableColumn @bind-Field="@context.Status" Text="Status" Sortable="true" />
+                        <TableColumn @bind-Field="@context.TotalAmount" Text="Total" Sortable="true">
+                            <Template Context="x">@FormatCurrency(x.Row.TotalAmount)</Template>
+                        </TableColumn>
+                        <TableColumn @bind-Field="@context.PaidAmount" Text="Paid" Sortable="true">
+                            <Template Context="x">@FormatCurrency(x.Row.PaidAmount)</Template>
+                        </TableColumn>
+                        <TableColumn @bind-Field="@context.DueDate" Text="Due Date" Sortable="true" />
+                        <TableColumn @bind-Field="@context.Id" Text="" Width="90" Filterable="false" Sortable="false">
+                            <Template Context="x">
+                                <Button Color="Color.None" Icon="fa-solid fa-pen" Size="Size.ExtraSmall" OnClick="() => EditAsync(x.Value)" />
+                                <PopConfirmButton Color="Color.None" Icon="fa-solid fa-trash" Size="Size.ExtraSmall" Content="Hapus invoice ini?" OnConfirm="() => DeleteAsync(x.Value)" />
+                            </Template>
+                        </TableColumn>
+                    </TableColumns>
+                    <TableExtensionToolbarTemplate>
+                        <Button Text="Add Invoice" ButtonStyle="ButtonStyle.None" Icon="bi bi-plus-lg" Color="Color.Link" OnClick="AddNew" />
+                    </TableExtensionToolbarTemplate>
+                </Table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="invoice" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="card border-light">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tenant</label>
+                            <InputSelect class="form-select" @bind-Value="invoice.TenantId">
+                                <option value="0">Select tenant</option>
+                                @foreach (var tenant in tenants)
+                                {
+                                    <option value="@tenant.Id">@tenant.BusinessName</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Customer</label>
+                            <InputSelect class="form-select" @bind-Value="invoice.CustomerDataId">
+                                <option value="">No customer</option>
+                                @foreach (var customer in customers)
+                                {
+                                    <option value="@customer.Id">@customer.CustomerName</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Work Order</label>
+                            <InputSelect class="form-select" @bind-Value="invoice.WorkOrderId">
+                                <option value="">No work order</option>
+                                @foreach (var order in workOrders)
+                                {
+                                    <option value="@order.Id">@order.OrderNumber - @order.Title</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Invoice Number</label>
+                            <InputText class="form-control" @bind-Value="invoice.InvoiceNumber" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Invoice Date</label>
+                            <InputDate class="form-control" @bind-Value="invoice.InvoiceDate" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Due Date</label>
+                            <InputDate class="form-control" @bind-Value="invoice.DueDate" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Subtotal</label>
+                            <InputNumber class="form-control" @bind-Value="invoice.Subtotal" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tax</label>
+                            <InputNumber class="form-control" @bind-Value="invoice.TaxAmount" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Discount</label>
+                            <InputNumber class="form-control" @bind-Value="invoice.DiscountAmount" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Paid</label>
+                            <InputNumber class="form-control" @bind-Value="invoice.PaidAmount" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <InputSelect class="form-select" @bind-Value="invoice.Status">
+                                @foreach (var status in InvoiceStatuses)
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Calculated Total</label>
+                            <input class="form-control" value="@FormatCurrency(invoice.Subtotal + invoice.TaxAmount - invoice.DiscountAmount)" disabled />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex gap-2">
+                <Button ButtonType="ButtonType.Submit" Color="Color.Primary" Icon="fa-solid fa-floppy-disk" Text="Save" />
+                <Button ButtonType="ButtonType.Button" Color="Color.Secondary" Icon="fa-solid fa-xmark" Text="Cancel" OnClick="Cancel" />
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private static readonly string[] InvoiceStatuses = ["Draft", "Unpaid", "Partial", "Paid", "Overdue", "Canceled"];
+    private List<Invoice> invoices = [];
+    private List<Tenant> tenants = [];
+    private List<CustomerData> customers = [];
+    private List<WorkOrder> workOrders = [];
+    private Invoice invoice = new();
+    private bool showTable = true;
+    private string currentUser = "system";
+
+    private static IEnumerable<int> PageItemsSource => new int[] { 10, 20, 50 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity?.Name ?? "system";
+        tenants = await Service.GetTenantsAsync();
+        customers = await Service.GetCustomersAsync();
+        workOrders = await Service.GetWorkOrdersAsync();
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        invoices = await Service.GetInvoicesAsync();
+        showTable = true;
+    }
+
+    private void AddNew()
+    {
+        invoice = new Invoice
+        {
+            TenantId = tenants.FirstOrDefault()?.Id ?? 0,
+            CustomerDataId = customers.FirstOrDefault()?.Id,
+            WorkOrderId = workOrders.FirstOrDefault()?.Id,
+            InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMddHHmm}",
+            InvoiceDate = DateTime.UtcNow,
+            DueDate = DateTime.UtcNow.AddDays(14),
+            Status = "Draft",
+            CreatedBy = currentUser
+        };
+        showTable = false;
+    }
+
+    private async Task EditAsync(int id)
+    {
+        invoice = await Service.GetInvoiceByIdAsync(id) ?? new Invoice();
+        showTable = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        invoice.UpdatedBy = currentUser;
+        var result = await Service.SaveInvoiceAsync(invoice);
+        await HandleResultAsync(result);
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        var result = await Service.DeleteInvoiceAsync(id);
+        await HandleResultAsync(result);
+    }
+
+    private void Cancel() => showTable = true;
+
+    private async Task HandleResultAsync(string result)
+    {
+        if (result == "ok")
+        {
+            await RefreshAsync();
+            return;
+        }
+
+        await MessageService.Show(new MessageOption { Color = Color.Danger, Content = result, Icon = "fa-solid fa-circle-info" });
+    }
+
+    private static string FormatCurrency(decimal value)
+        => string.Create(System.Globalization.CultureInfo.GetCultureInfo("id-ID"), $"Rp {value:N0}");
+}

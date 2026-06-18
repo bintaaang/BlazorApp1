@@ -1,0 +1,150 @@
+@page "/saas/tenants"
+@attribute [Authorize(Policy = "manage_tenants")]
+@inject ISaasManagementService Service
+@inject AuthenticationStateProvider AuthStateProvider
+@inject MessageService MessageService
+
+<div class="container-fluid">
+    <div class="mb-4">
+        <h1 class="h2 fw-bold mb-1">Tenants</h1>
+        <p class="text-secondary mb-0">Kelola workspace pelanggan SaaS, status aktivasi, dan identitas bisnis.</p>
+    </div>
+
+    @if (showTable)
+    {
+        <div class="card border-light">
+            <div class="card-body">
+                <Table TItem="Tenant"
+                       Items="tenants"
+                       IsStriped="true"
+                       IsBordered="true"
+                       IsPagination="true"
+                       PageItemsSource="@PageItemsSource"
+                       ShowToolbar="true"
+                       ShowDefaultButtons="false">
+                    <TableColumns>
+                        <TableColumn @bind-Field="@context.BusinessName" Text="Business Name" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.Slug" Text="Slug" Sortable="true" Filterable="true" />
+                        <TableColumn @bind-Field="@context.OwnerName" Text="Owner" Sortable="true" />
+                        <TableColumn @bind-Field="@context.Email" Text="Email" />
+                        <TableColumn @bind-Field="@context.Phone" Text="Phone" />
+                        <TableColumn @bind-Field="@context.IsActive" Text="Active" Sortable="true" />
+                        <TableColumn @bind-Field="@context.Id" Text="" Width="90" Filterable="false" Sortable="false">
+                            <Template Context="x">
+                                <Button Color="Color.None" Icon="fa-solid fa-pen" Size="Size.ExtraSmall" OnClick="() => EditAsync(x.Value)" />
+                                <PopConfirmButton Color="Color.None" Icon="fa-solid fa-trash" Size="Size.ExtraSmall" Content="Hapus tenant ini?" OnConfirm="() => DeleteAsync(x.Value)" />
+                            </Template>
+                        </TableColumn>
+                    </TableColumns>
+                    <TableExtensionToolbarTemplate>
+                        <Button Text="Add Tenant" ButtonStyle="ButtonStyle.None" Icon="bi bi-plus-lg" Color="Color.Link" OnClick="AddNew" />
+                    </TableExtensionToolbarTemplate>
+                </Table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="tenant" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="card border-light">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Business Name</label>
+                            <InputText class="form-control" @bind-Value="tenant.BusinessName" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Slug</label>
+                            <InputText class="form-control" @bind-Value="tenant.Slug" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Owner</label>
+                            <InputText class="form-control" @bind-Value="tenant.OwnerName" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            <InputText class="form-control" @bind-Value="tenant.Email" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Phone</label>
+                            <InputText class="form-control" @bind-Value="tenant.Phone" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <InputCheckbox class="form-check-input" @bind-Value="tenant.IsActive" />
+                                <label class="form-check-label">Active tenant</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex gap-2">
+                <Button ButtonType="ButtonType.Submit" Color="Color.Primary" Icon="fa-solid fa-floppy-disk" Text="Save" />
+                <Button ButtonType="ButtonType.Button" Color="Color.Secondary" Icon="fa-solid fa-xmark" Text="Cancel" OnClick="Cancel" />
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private List<Tenant> tenants = [];
+    private Tenant tenant = new();
+    private bool showTable = true;
+    private string currentUser = "system";
+
+    private static IEnumerable<int> PageItemsSource => new int[] { 10, 20, 50 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity?.Name ?? "system";
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        tenants = await Service.GetTenantsAsync();
+        showTable = true;
+    }
+
+    private void AddNew()
+    {
+        tenant = new Tenant { IsActive = true, CreatedBy = currentUser };
+        showTable = false;
+    }
+
+    private async Task EditAsync(int id)
+    {
+        tenant = await Service.GetTenantByIdAsync(id) ?? new Tenant();
+        showTable = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        tenant.UpdatedBy = currentUser;
+        var result = await Service.SaveTenantAsync(tenant);
+        await HandleResultAsync(result);
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        var result = await Service.DeleteTenantAsync(id);
+        await HandleResultAsync(result);
+    }
+
+    private void Cancel() => showTable = true;
+
+    private async Task HandleResultAsync(string result)
+    {
+        if (result == "ok")
+        {
+            await RefreshAsync();
+            return;
+        }
+
+        await MessageService.Show(new MessageOption { Color = Color.Danger, Content = result, Icon = "fa-solid fa-circle-info" });
+    }
+}

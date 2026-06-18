@@ -18,6 +18,13 @@ public class AppDbContext : DbContext
     public DbSet<Module> Modules => Set<Module>();
     public DbSet<Menu> Menus => Set<Menu>();
     public DbSet<CustomerData> CustomerData => Set<CustomerData>();
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
+    public DbSet<ServiceItem> ServiceItems => Set<ServiceItem>();
+    public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Payment> Payments => Set<Payment>();
 
     public override int SaveChanges()
     {
@@ -41,6 +48,13 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Module>().ToTable("AppModules");
         modelBuilder.Entity<Menu>().ToTable("AppMenus");
         modelBuilder.Entity<CustomerData>().ToTable("CustomerData");
+        modelBuilder.Entity<Tenant>().ToTable("SaasTenants");
+        modelBuilder.Entity<SubscriptionPlan>().ToTable("SaasSubscriptionPlans");
+        modelBuilder.Entity<TenantSubscription>().ToTable("SaasTenantSubscriptions");
+        modelBuilder.Entity<ServiceItem>().ToTable("ServiceItems");
+        modelBuilder.Entity<WorkOrder>().ToTable("WorkOrders");
+        modelBuilder.Entity<Invoice>().ToTable("Invoices");
+        modelBuilder.Entity<Payment>().ToTable("Payments");
         modelBuilder.Entity<UserRole>().ToTable("AppUserRoles");
         modelBuilder.Entity<RolePermission>().ToTable("AppRolePermissions");
         modelBuilder.Entity<UserPermission>().ToTable("AppUserPermissions");
@@ -110,6 +124,72 @@ public class AppDbContext : DbContext
             .HasForeignKey(user => user.CustomerDataId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<User>()
+            .HasOne(user => user.Tenant)
+            .WithMany(tenant => tenant.Users)
+            .HasForeignKey(user => user.TenantId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<CustomerData>()
+            .HasOne(customer => customer.Tenant)
+            .WithMany(tenant => tenant.Customers)
+            .HasForeignKey(customer => customer.TenantId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<TenantSubscription>()
+            .HasOne(subscription => subscription.Tenant)
+            .WithMany(tenant => tenant.Subscriptions)
+            .HasForeignKey(subscription => subscription.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TenantSubscription>()
+            .HasOne(subscription => subscription.SubscriptionPlan)
+            .WithMany(plan => plan.Subscriptions)
+            .HasForeignKey(subscription => subscription.SubscriptionPlanId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ServiceItem>()
+            .HasOne(item => item.Tenant)
+            .WithMany(tenant => tenant.ServiceItems)
+            .HasForeignKey(item => item.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WorkOrder>()
+            .HasOne(order => order.Tenant)
+            .WithMany(tenant => tenant.WorkOrders)
+            .HasForeignKey(order => order.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WorkOrder>()
+            .HasOne(order => order.CustomerData)
+            .WithMany(customer => customer.WorkOrders)
+            .HasForeignKey(order => order.CustomerDataId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Invoice>()
+            .HasOne(invoice => invoice.Tenant)
+            .WithMany(tenant => tenant.Invoices)
+            .HasForeignKey(invoice => invoice.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Invoice>()
+            .HasOne(invoice => invoice.CustomerData)
+            .WithMany(customer => customer.Invoices)
+            .HasForeignKey(invoice => invoice.CustomerDataId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Invoice>()
+            .HasOne(invoice => invoice.WorkOrder)
+            .WithMany(order => order.Invoices)
+            .HasForeignKey(invoice => invoice.WorkOrderId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Payment>()
+            .HasOne(payment => payment.Invoice)
+            .WithMany(invoice => invoice.Payments)
+            .HasForeignKey(payment => payment.InvoiceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Add indexes
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
@@ -136,6 +216,25 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<CustomerData>()
             .HasIndex(customer => customer.CustomerName);
+
+        modelBuilder.Entity<Tenant>()
+            .HasIndex(tenant => tenant.Slug)
+            .IsUnique();
+
+        modelBuilder.Entity<SubscriptionPlan>()
+            .HasIndex(plan => plan.Name)
+            .IsUnique();
+
+        modelBuilder.Entity<ServiceItem>()
+            .HasIndex(item => new { item.TenantId, item.Name });
+
+        modelBuilder.Entity<WorkOrder>()
+            .HasIndex(order => new { order.TenantId, order.OrderNumber })
+            .IsUnique();
+
+        modelBuilder.Entity<Invoice>()
+            .HasIndex(invoice => new { invoice.TenantId, invoice.InvoiceNumber })
+            .IsUnique();
     }
 
     private void ApplyAuditInfo()
