@@ -1,11 +1,13 @@
-name: Deploy to Server
+name: Deploy Blazor App
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main, master ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
