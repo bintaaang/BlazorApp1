@@ -4,6 +4,8 @@ namespace BlazorApp1.Models;
 
 public class CustomerData : BaseEntity
 {
+    public int? TenantId { get; set; }
+
     [Display(Name = "Customer Name")]
     [Required(ErrorMessage = "Customer name wajib diisi")]
     public string CustomerName { get; set; } = string.Empty;
@@ -12,5 +14,8 @@ public class CustomerData : BaseEntity
     [Required(ErrorMessage = "Customer type wajib diisi")]
     public string CustomerType { get; set; } = string.Empty;
 
+    public Tenant? Tenant { get; set; }
     public ICollection<User> Users { get; set; } = [];
+    public ICollection<WorkOrder> WorkOrders { get; set; } = [];
+    public ICollection<Invoice> Invoices { get; set; } = [];
 }

@@ -18,6 +18,13 @@ public class AppDbContext : DbContext
     public DbSet<Module> Modules => Set<Module>();
     public DbSet<Menu> Menus => Set<Menu>();
     public DbSet<CustomerData> CustomerData => Set<CustomerData>();
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
+    public DbSet<ServiceItem> ServiceItems => Set<ServiceItem>();
+    public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Payment> Payments => Set<Payment>();
 
     public override int SaveChanges()
     {

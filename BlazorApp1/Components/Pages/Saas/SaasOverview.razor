@@ -1,0 +1,135 @@
+@page "/saas"
+@attribute [Authorize(Policy = "view_saas")]
+@inject ISaasDashboardService DashboardService
+
+<div class="container-fluid">
+    <div class="mb-4">
+        <h1 class="h2 fw-bold mb-1">SaaS Overview</h1>
+        <p class="text-secondary mb-0">Ringkasan tenant, subscription, order, dan invoice untuk produk bisnis jasa.</p>
+    </div>
+
+    @if (summary == null)
+    {
+        <p>Loading ...</p>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-sm-6 col-xl-3">
+                <Card HeaderText="Active Tenants" Color="Color.Primary">
+                    <BodyTemplate>
+                        <div class="fs-3 fw-bold">@summary.ActiveTenantCount</div>
+                        <div class="text-secondary">@summary.TenantCount tenant terdaftar</div>
+                    </BodyTemplate>
+                </Card>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <Card HeaderText="Customers" Color="Color.Success">
+                    <BodyTemplate>
+                        <div class="fs-3 fw-bold">@summary.CustomerCount</div>
+                        <div class="text-secondary">customer lintas tenant</div>
+                    </BodyTemplate>
+                </Card>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <Card HeaderText="Open Work Orders" Color="Color.Warning">
+                    <BodyTemplate>
+                        <div class="fs-3 fw-bold">@summary.OpenWorkOrderCount</div>
+                        <div class="text-secondary">@summary.WorkOrderCount total work order</div>
+                    </BodyTemplate>
+                </Card>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <Card HeaderText="MRR Snapshot" Color="Color.Info">
+                    <BodyTemplate>
+                        <div class="fs-3 fw-bold">@FormatCurrency(summary.MonthlyRecurringRevenue)</div>
+                        <div class="text-secondary">trial dan active subscription</div>
+                    </BodyTemplate>
+                </Card>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-1">
+            <div class="col-xl-4">
+                <Card HeaderText="Recent Tenants">
+                    <BodyTemplate>
+                        @if (summary.RecentTenants.Count == 0)
+                        {
+                            <span class="text-secondary">No tenant data.</span>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var tenant in summary.RecentTenants)
+                                {
+                                    <div class="list-group-item px-0">
+                                        <div class="fw-semibold">@tenant.BusinessName</div>
+                                        <div class="small text-secondary">@tenant.OwnerName · @tenant.Email</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </BodyTemplate>
+                </Card>
+            </div>
+
+            <div class="col-xl-4">
+                <Card HeaderText="Recent Work Orders">
+                    <BodyTemplate>
+                        @if (summary.RecentWorkOrders.Count == 0)
+                        {
+                            <span class="text-secondary">No work order data.</span>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var order in summary.RecentWorkOrders)
+                                {
+                                    <div class="list-group-item px-0">
+                                        <div class="fw-semibold">@order.OrderNumber · @order.Title</div>
+                                        <div class="small text-secondary">@order.CustomerData?.CustomerName · @order.Status</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </BodyTemplate>
+                </Card>
+            </div>
+
+            <div class="col-xl-4">
+                <Card HeaderText="Invoice Risk">
+                    <BodyTemplate>
+                        <div class="fs-3 fw-bold">@FormatCurrency(summary.UnpaidInvoiceAmount)</div>
+                        <div class="text-secondary mb-3">@summary.InvoiceCount invoice terdaftar</div>
+
+                        @foreach (var invoice in summary.RecentInvoices)
+                        {
+                            <div class="d-flex justify-content-between gap-3 border-top py-2">
+                                <div>
+                                    <div class="fw-semibold">@invoice.InvoiceNumber</div>
+                                    <div class="small text-secondary">@invoice.CustomerData?.CustomerName</div>
+                                </div>
+                                <div class="text-end">
+                                    <div>@FormatCurrency(invoice.TotalAmount)</div>
+                                    <div class="small text-secondary">@invoice.Status</div>
+                                </div>
+                            </div>
+                        }
+                    </BodyTemplate>
+                </Card>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private SaasDashboardSummary? summary;
+
+    protected override async Task OnInitializedAsync()
+    {
+        summary = await DashboardService.GetSummaryAsync();
+    }
+
+    private static string FormatCurrency(decimal value)
+        => string.Create(System.Globalization.CultureInfo.GetCultureInfo("id-ID"), $"Rp {value:N0}");
+}

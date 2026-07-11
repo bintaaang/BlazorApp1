@@ -9,6 +9,7 @@ using BlazorApp1.Services.Administration.UserManagement;
 using BlazorApp1.Services.ApplicationMenu;
 using BlazorApp1.Services.Auth;
 using BlazorApp1.Services.MasterData.CustomerData;
+using BlazorApp1.Services.Saas;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -40,14 +41,29 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICustomerDataService, CustomerDataService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
+builder.Services.AddScoped<ISaasDashboardService, SaasDashboardService>();
+builder.Services.AddScoped<IOperationsReadService, OperationsReadService>();
+builder.Services.AddScoped<ISaasManagementService, SaasManagementService>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseNpgsql(defaultConnection));
+    options.UseSqlServer(defaultConnection));
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("view_dashboard", policy => policy.Requirements.Add(new PermissionRequirement("view_dashboard")))
     .AddPolicy("manage_users", policy => policy.Requirements.Add(new PermissionRequirement("manage_users")))
     .AddPolicy("view_reports", policy => policy.Requirements.Add(new PermissionRequirement("view_reports")))
-    .AddPolicy("view_customer", policy => policy.Requirements.Add(new PermissionRequirement("view_customer")));
+    .AddPolicy("view_customer", policy => policy.Requirements.Add(new PermissionRequirement("view_customer")))
+    // SaaS
+    .AddPolicy("view_saas", policy => policy.Requirements.Add(new PermissionRequirement("view_saas")))
+    .AddPolicy("manage_tenants", policy => policy.Requirements.Add(new PermissionRequirement("manage_tenants")))
+    .AddPolicy("manage_subscriptions", policy => policy.Requirements.Add(new PermissionRequirement("manage_subscriptions")))
+    // Operations
+    .AddPolicy("view_operations", policy => policy.Requirements.Add(new PermissionRequirement("view_operations")))
+    .AddPolicy("manage_serviceitems", policy => policy.Requirements.Add(new PermissionRequirement("manage_serviceitems")))
+    .AddPolicy("manage_workorders", policy => policy.Requirements.Add(new PermissionRequirement("manage_workorders")))
+    // Billing
+    .AddPolicy("view_billing", policy => policy.Requirements.Add(new PermissionRequirement("view_billing")))
+    .AddPolicy("manage_invoices", policy => policy.Requirements.Add(new PermissionRequirement("manage_invoices")))
+    .AddPolicy("manage_payments", policy => policy.Requirements.Add(new PermissionRequirement("manage_payments")));
 
 var app = builder.Build();
 await app.InitializeDatabaseAsync();

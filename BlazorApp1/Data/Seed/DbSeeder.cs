@@ -1,4 +1,5 @@
 using BlazorApp1.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -25,7 +26,19 @@ public static class DbSeeder
             {
                 new Permission { Name = "view_dashboard", Description = "View Dashboard" },
                 new Permission { Name = "manage_users", Description = "Manage Users" },
-                new Permission { Name = "view_reports", Description = "View Reports" }
+                new Permission { Name = "view_reports", Description = "View Reports" },
+                // SaaS
+                new Permission { Name = "view_saas", Description = "View SaaS Overview" },
+                new Permission { Name = "manage_tenants", Description = "Manage Tenants" },
+                new Permission { Name = "manage_subscriptions", Description = "Manage Subscriptions" },
+                // Operations
+                new Permission { Name = "view_operations", Description = "View Operations" },
+                new Permission { Name = "manage_serviceitems", Description = "Manage Service Items" },
+                new Permission { Name = "manage_workorders", Description = "Manage Work Orders" },
+                // Billing
+                new Permission { Name = "view_billing", Description = "View Billing" },
+                new Permission { Name = "manage_invoices", Description = "Manage Invoices" },
+                new Permission { Name = "manage_payments", Description = "Manage Payments" }
             };
 
             context.Permissions.AddRange(permissions);
@@ -64,15 +77,28 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
-        // Seed Modules
+        // Seed Modules (always ensure these exist)
         await EnsureModuleAsync(context, "Main", "Main application menu", "bi bi-grid", 1);
         await EnsureModuleAsync(context, "Administration", "Administration menu", "bi bi-shield-lock", 2);
+        await EnsureModuleAsync(context, "SaaS", "SaaS & Enterprise menu", "bi bi-cloud", 3);
+        await EnsureModuleAsync(context, "Operations", "Operations menu", "bi bi-tools", 4);
+        await EnsureModuleAsync(context, "Billing", "Billing & Finance menu", "bi bi-credit-card", 5);
+        
+        // Verify all modules exist before using them
+        var mainModule = await context.Modules.FirstAsync(m => m.Name == "Main");
+        var adminModule = await context.Modules.FirstAsync(m => m.Name == "Administration");
+        var saasModule = await context.Modules.FirstAsync(m => m.Name == "SaaS");
+        var opsModule = await context.Modules.FirstAsync(m => m.Name == "Operations");
+        var billingModule = await context.Modules.FirstAsync(m => m.Name == "Billing");
 
         // Seed Menu
         if (!context.Menus.Any())
         {
-            var mainModuleId = context.Modules.First(m => m.Name == "Main").Id;
-            var adminModuleId = context.Modules.First(m => m.Name == "Administration").Id;
+            var mainModuleId = mainModule.Id;
+            var adminModuleId = adminModule.Id;
+            var saasModuleId = saasModule.Id;
+            var opsModuleId = opsModule.Id;
+            var billingModuleId = billingModule.Id;
 
             var menus = new[]
             {
@@ -105,6 +131,79 @@ public static class DbSeeder
                     Order = 4,
                     PermissionName = "view_reports",
                     IsActive = true
+                },
+                // SaaS Menus
+                new Menu
+                {
+                    Name = "SaaS Overview",
+                    Url = "/saas",
+                    Icon = "bi bi-cloud",
+                    ModuleId = saasModuleId,
+                    Order = 1,
+                    PermissionName = "view_saas",
+                    IsActive = true
+                },
+                new Menu
+                {
+                    Name = "Tenants",
+                    Url = "/saas/tenants",
+                    Icon = "bi bi-building",
+                    ModuleId = saasModuleId,
+                    Order = 2,
+                    PermissionName = "manage_tenants",
+                    IsActive = true
+                },
+                new Menu
+                {
+                    Name = "Subscription Plans",
+                    Url = "/saas/plans",
+                    Icon = "bi bi-card-list",
+                    ModuleId = saasModuleId,
+                    Order = 3,
+                    PermissionName = "manage_subscriptions",
+                    IsActive = true
+                },
+                // Operations Menus
+                new Menu
+                {
+                    Name = "Service Items",
+                    Url = "/operations/service-items",
+                    Icon = "bi bi-box",
+                    ModuleId = opsModuleId,
+                    Order = 1,
+                    PermissionName = "manage_serviceitems",
+                    IsActive = true
+                },
+                new Menu
+                {
+                    Name = "Work Orders",
+                    Url = "/operations/work-orders",
+                    Icon = "bi bi-clipboard-check",
+                    ModuleId = opsModuleId,
+                    Order = 2,
+                    PermissionName = "manage_workorders",
+                    IsActive = true
+                },
+                // Billing Menus
+                new Menu
+                {
+                    Name = "Invoices",
+                    Url = "/billing/invoices",
+                    Icon = "bi bi-file-earmark-text",
+                    ModuleId = billingModuleId,
+                    Order = 1,
+                    PermissionName = "manage_invoices",
+                    IsActive = true
+                },
+                new Menu
+                {
+                    Name = "Payments",
+                    Url = "/billing/payments",
+                    Icon = "bi bi-credit-card",
+                    ModuleId = billingModuleId,
+                    Order = 2,
+                    PermissionName = "manage_payments",
+                    IsActive = true
                 }
             };
 
@@ -113,6 +212,66 @@ public static class DbSeeder
         }
 
         await SyncMenuModulesAsync(context);
+
+        // Ensure new permissions exist (idempotent)
+        var existingPermissionNames = context.Permissions.Select(p => p.Name).ToHashSet();
+        var newPermissions = new[]
+        {
+            new Permission { Name = "view_saas", Description = "View SaaS Overview" },
+            new Permission { Name = "manage_tenants", Description = "Manage Tenants" },
+            new Permission { Name = "manage_subscriptions", Description = "Manage Subscriptions" },
+            new Permission { Name = "view_operations", Description = "View Operations" },
+            new Permission { Name = "manage_serviceitems", Description = "Manage Service Items" },
+            new Permission { Name = "manage_workorders", Description = "Manage Work Orders" },
+            new Permission { Name = "view_billing", Description = "View Billing" },
+            new Permission { Name = "manage_invoices", Description = "Manage Invoices" },
+            new Permission { Name = "manage_payments", Description = "Manage Payments" }
+        };
+        foreach (var p in newPermissions)
+        {
+            if (!existingPermissionNames.Contains(p.Name))
+                context.Permissions.Add(p);
+        }
+        await context.SaveChangesAsync();
+
+        // Menambahkan menu baru jika belum ada
+        var existingMenuUrls = context.Menus.Select(m => m.Url).ToHashSet();
+        
+        // Pastikan Admin role punya semua permission baru
+        var adminRoleEntity = await context.Roles.FirstAsync(r => r.Name == "Admin");
+        var existingRolePermissions = context.RolePermissions
+            .Where(rp => rp.RoleId == adminRoleEntity.Id)
+            .Select(rp => rp.PermissionId)
+            .ToHashSet();
+        var allPermissions = await context.Permissions.ToListAsync();
+        foreach (var perm in allPermissions)
+        {
+            if (!existingRolePermissions.Contains(perm.Id))
+            {
+                context.RolePermissions.Add(new RolePermission
+                {
+                    RoleId = adminRoleEntity.Id,
+                    PermissionId = perm.Id
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+
+        var newMenus = new[]
+        {
+            new Menu { Name = "SaaS Overview", Url = "/saas", Icon = "bi bi-cloud", ModuleId = saasModule.Id, Order = 1, PermissionName = "view_saas", IsActive = true },
+            new Menu { Name = "Tenants", Url = "/saas/tenants", Icon = "bi bi-building", ModuleId = saasModule.Id, Order = 2, PermissionName = "manage_tenants", IsActive = true },
+            new Menu { Name = "Subscription Plans", Url = "/saas/plans", Icon = "bi bi-card-list", ModuleId = saasModule.Id, Order = 3, PermissionName = "manage_subscriptions", IsActive = true },
+            new Menu { Name = "Service Items", Url = "/operations/service-items", Icon = "bi bi-box", ModuleId = opsModule.Id, Order = 1, PermissionName = "manage_serviceitems", IsActive = true },
+            new Menu { Name = "Work Orders", Url = "/operations/work-orders", Icon = "bi bi-clipboard-check", ModuleId = opsModule.Id, Order = 2, PermissionName = "manage_workorders", IsActive = true },
+            new Menu { Name = "Invoices", Url = "/billing/invoices", Icon = "bi bi-file-earmark-text", ModuleId = billingModule.Id, Order = 1, PermissionName = "manage_invoices", IsActive = true }
+        };
+        foreach (var m in newMenus)
+        {
+            if (!existingMenuUrls.Contains(m.Url))
+                context.Menus.Add(m);
+        }
+        await context.SaveChangesAsync();
 
         // Seed Users (Demo)
         if (!context.Users.Any())
@@ -196,12 +355,21 @@ public static class DbSeeder
     {
         var mainModuleId = context.Modules.First(m => m.Name == "Main").Id;
         var adminModuleId = context.Modules.First(m => m.Name == "Administration").Id;
+        var saasModuleId = context.Modules.First(m => m.Name == "SaaS").Id;
+        var opsModuleId = context.Modules.First(m => m.Name == "Operations").Id;
+        var billingModuleId = context.Modules.First(m => m.Name == "Billing").Id;
 
         var moduleByUrl = new Dictionary<string, int>
         {
             ["/dashboard"] = mainModuleId,
             ["/admin/users"] = adminModuleId,
-            ["/admin/reports"] = adminModuleId
+            ["/admin/reports"] = adminModuleId,
+            ["/saas"] = saasModuleId,
+            ["/saas/tenants"] = saasModuleId,
+            ["/saas/plans"] = saasModuleId,
+            ["/operations/service-items"] = opsModuleId,
+            ["/operations/work-orders"] = opsModuleId,
+            ["/billing/invoices"] = billingModuleId
         };
 
         foreach (var menu in context.Menus)

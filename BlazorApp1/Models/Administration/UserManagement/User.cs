@@ -28,6 +28,8 @@ public class User : BaseEntity, IValidatableObject
     [PlaceHolder("Pilih status")]
     public bool IsActive { get; set; } = true;
     public int? CustomerDataId { get; set; }
+    public int? TenantId { get; set; }
+    public Tenant? Tenant { get; set; }
     public CustomerData? CustomerData { get; set; }
 
     // Navigation properties
