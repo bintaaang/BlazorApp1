@@ -1,13 +1,20 @@
 name: Deploy Blazor App
 
 on:
-  push:
-    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Konfirmasi deploy ke production?'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - yes
+          - no
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,15 +25,10 @@ jobs:
           HOST: ${{ secrets.SERVER_HOST }}
           USER: ${{ secrets.SERVER_USER }}
         run: |
-          # Decode base64 private key
           mkdir -p ~/.ssh
           echo "$SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          
-          # Add host key
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          
-          # Deploy
           ssh -i ~/.ssh/deploy_key "${USER}@${HOST}" \
             "cd ~/deployment && \
              git -C BlazorApp1 pull && \
