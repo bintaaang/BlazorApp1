@@ -2,15 +2,6 @@ name: Deploy Blazor App
 
 on:
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: 'Konfirmasi deploy ke production?'
-        required: true
-        default: 'yes'
-        type: choice
-        options:
-          - yes
-          - no
 
 jobs:
   deploy:
