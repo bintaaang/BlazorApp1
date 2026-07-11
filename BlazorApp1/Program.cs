@@ -55,13 +55,17 @@ builder.Services.AddAuthorizationBuilder()
     // SaaS
     .AddPolicy("view_saas", policy => policy.Requirements.Add(new PermissionRequirement("view_saas")))
     .AddPolicy("manage_tenants", policy => policy.Requirements.Add(new PermissionRequirement("manage_tenants")))
+    .AddPolicy("manage_subscription_plans", policy => policy.Requirements.Add(new PermissionRequirement("manage_subscription_plans")))
     .AddPolicy("manage_subscriptions", policy => policy.Requirements.Add(new PermissionRequirement("manage_subscriptions")))
     // Operations
     .AddPolicy("view_operations", policy => policy.Requirements.Add(new PermissionRequirement("view_operations")))
+    .AddPolicy("view_work_orders", policy => policy.Requirements.Add(new PermissionRequirement("view_work_orders")))
+    .AddPolicy("manage_service_items", policy => policy.Requirements.Add(new PermissionRequirement("manage_service_items")))
     .AddPolicy("manage_serviceitems", policy => policy.Requirements.Add(new PermissionRequirement("manage_serviceitems")))
     .AddPolicy("manage_workorders", policy => policy.Requirements.Add(new PermissionRequirement("manage_workorders")))
     // Billing
     .AddPolicy("view_billing", policy => policy.Requirements.Add(new PermissionRequirement("view_billing")))
+    .AddPolicy("view_invoices", policy => policy.Requirements.Add(new PermissionRequirement("view_invoices")))
     .AddPolicy("manage_invoices", policy => policy.Requirements.Add(new PermissionRequirement("manage_invoices")))
     .AddPolicy("manage_payments", policy => policy.Requirements.Add(new PermissionRequirement("manage_payments")));
 
